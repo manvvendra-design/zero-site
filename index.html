@@ -20,29 +20,29 @@ img{max-width:100%}
 [hidden]{display:none!important}
 :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 
-/* Layout: a night reading-room in the valley. The live frame is the hero, full width; the book's frame strip and the
-   writing-in-public log sit below it in one narrow column. One look on purpose (dark ink, bone paper, Zero red). */
+/* Layout: white paper, like the page the logo was drawn on. The live frame is the hero, full width; the book's frame strip and the
+   writing-in-public log sit below it in one narrow column. One look on purpose (white paper, ink, Zero red). */
 :root{
-  --ink:#0e1113;          /* page: night over the lakes */
-  --ink-2:#161b1e;        /* raised surface */
-  --line:#262e32;
-  --mist:#cfd6d6;         /* body text */
-  --dim:#88959a;          /* captions */
-  --bone:#efe8dc;         /* the paper the logo is drawn on */
+  --ink:#ffffff;          /* page: white paper */
+  --ink-2:#f5f2ed;        /* raised surface */
+  --line:#e6e1d9;
+  --mist:#2a2f31;         /* body text */
+  --dim:#6b7377;          /* captions */
+  --bone:#121517;         /* headings, ink */
   --red:#a0100e;          /* Zero red, from the logo */
-  --red-lit:#e0412b;      /* the same red where light hits it, for text on ink */
-  --gold:#d8a64a;         /* low sun through mist */
+  --red-lit:#a0100e;      /* Zero red for text on white */
+  --gold:#8f6212;         /* low sun, deepened for white paper */
   --display:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",Georgia,serif;
   --quote:"Cormorant Garamond",Georgia,"Times New Roman",serif;
   --body:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
-  color-scheme:dark;
+  color-scheme:light;
 }
 html,body{background:var(--ink);color:var(--mist)}
 body{font-family:var(--body);font-size:16px;line-height:1.65;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px}
 a{color:var(--bone);text-decoration-color:var(--red-lit);text-underline-offset:3px}
-a:hover{color:#fff}
+a:hover{color:var(--red-lit)}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .wrap{max-width:1120px;margin:0 auto;display:grid;gap:56px}
 .col{max-width:720px;width:100%;margin:0 auto;display:grid;gap:20px}
@@ -50,7 +50,7 @@ a:hover{color:#fff}
 /* header */
 header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .mark{display:flex;align-items:center;gap:14px;text-decoration:none}
-.plate{width:84px;height:56px;background:var(--bone);border-radius:3px;display:grid;place-items:center;padding:5px 8px}
+.plate{width:96px;height:64px;background:transparent;border-radius:3px;display:grid;place-items:center;padding:5px 8px}
 .plate img{width:100%;height:100%;object-fit:contain}
 .mark small{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);line-height:1.5}
 nav{display:flex;gap:20px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
@@ -67,7 +67,7 @@ h2{font-family:var(--display);font-weight:500;font-size:clamp(24px,3.4vw,32px);l
 
 /* live panel */
 .panel{position:relative;width:100%;max-width:100%;aspect-ratio:1376/768;overflow:hidden;border-radius:2px;background:#22292c;
-  cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;box-shadow:0 0 0 1px var(--line),0 40px 80px -40px #000}
+  cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;box-shadow:0 0 0 1px var(--line),0 30px 60px -36px rgba(18,21,23,.45)}
 .stage{position:absolute;inset:0;transform-origin:58% 58%;transition:transform 6s cubic-bezier(.2,.6,.2,1)}
 .stage img,.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
 .panel.playing .stage{transform:scale(1.045)}
@@ -85,7 +85,7 @@ h2{font-family:var(--display);font-weight:500;font-size:clamp(24px,3.4vw,32px);l
 .controls{display:flex;gap:10px;flex-wrap:wrap}
 button{font:500 13px/1 var(--body);color:var(--bone);background:transparent;border:1px solid var(--line);border-radius:999px;padding:9px 16px;cursor:pointer}
 button:hover{border-color:var(--red-lit)}
-button[aria-pressed="true"]{background:var(--red);border-color:var(--red)}
+button[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
 button:disabled{opacity:.4;cursor:default}
 
 /* frame strip */
@@ -95,9 +95,9 @@ button:disabled{opacity:.4;cursor:default}
   display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;padding:0}
 .slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .slot.on{box-shadow:0 0 0 2px var(--red-lit)}
-.slot .n{position:relative;background:rgba(14,17,19,.6);padding:1px 6px;border-radius:2px}
+.slot .n{position:relative;background:rgba(255,255,255,.8);padding:1px 6px;border-radius:2px}
 .slot:disabled{opacity:1;cursor:default}
-.slot.empty::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 9px,rgba(207,214,214,.04) 9px 10px)}
+.slot.empty::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 9px,rgba(18,21,23,.04) 9px 10px)}
 .note{font-size:14px;color:var(--dim);margin:0}
 
 /* log */
