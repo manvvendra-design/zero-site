@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="assets/zero-logo.svg" type="image/svg+xml">
+<title>Zero Snake Tree</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Zero: live comics from the Dibang Valley, painted one frame at a time.">
+<meta property="og:title" content="Zero">
+<meta property="og:description" content="Live comics from the Dibang Valley, painted one frame at a time.">
+<meta property="og:image" content="https://zerosnaketree.com/assets/og-frame-001.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Cormorant+Garamond:ital,wght@1,500&family=Zen+Kaku+Gothic+New:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+/* Layout: a night reading-room in the valley. The live frame is the hero, full width; the book's frame strip and the
+   writing-in-public log sit below it in one narrow column. One look on purpose (dark ink, bone paper, Zero red). */
+:root{
+  --ink:#0e1113;          /* page: night over the lakes */
+  --ink-2:#161b1e;        /* raised surface */
+  --line:#262e32;
+  --mist:#cfd6d6;         /* body text */
+  --dim:#88959a;          /* captions */
+  --bone:#efe8dc;         /* the paper the logo is drawn on */
+  --red:#a0100e;          /* Zero red, from the logo */
+  --red-lit:#e0412b;      /* the same red where light hits it, for text on ink */
+  --gold:#d8a64a;         /* low sun through mist */
+  --display:"Shippori Mincho","Hiragino Mincho ProN","Yu Mincho",Georgia,serif;
+  --quote:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --body:"Zen Kaku Gothic New",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--ink);color:var(--mist)}
+body{font-family:var(--body);font-size:16px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 64px}
+a{color:var(--bone);text-decoration-color:var(--red-lit);text-underline-offset:3px}
+a:hover{color:#fff}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:56px}
+.col{max-width:720px;width:100%;margin:0 auto;display:grid;gap:20px}
+
+/* header */
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.mark{display:flex;align-items:center;gap:14px;text-decoration:none}
+.plate{width:84px;height:56px;background:var(--bone);border-radius:3px;display:grid;place-items:center;padding:5px 8px}
+.plate img{width:100%;height:100%;object-fit:contain}
+.mark small{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);line-height:1.5}
+nav{display:flex;gap:20px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+nav a{color:var(--mist);text-decoration:none}
+nav a:hover{color:var(--red-lit)}
+
+/* hero */
+.hero{display:grid;gap:18px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,6vw,64px);line-height:1.05;margin:0;color:var(--bone);text-wrap:balance;letter-spacing:.01em}
+h1 em{font-style:normal;color:var(--red-lit)}
+h2{font-family:var(--display);font-weight:500;font-size:clamp(24px,3.4vw,32px);line-height:1.2;margin:0;color:var(--bone);text-wrap:balance}
+.lede{font-size:17px;max-width:62ch;margin:0}
+
+/* live panel */
+.panel{position:relative;width:100%;max-width:100%;aspect-ratio:1376/768;overflow:hidden;border-radius:2px;background:#22292c;
+  cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;box-shadow:0 0 0 1px var(--line),0 40px 80px -40px #000}
+.stage{position:absolute;inset:0;transform-origin:58% 58%;transition:transform 6s cubic-bezier(.2,.6,.2,1)}
+.stage img,.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover}
+.panel.playing .stage{transform:scale(1.045)}
+.live{position:absolute;top:12px;right:12px;display:flex;align-items:center;gap:7px;padding:5px 11px 5px 8px;border-radius:999px;
+  background:rgba(14,17,19,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:#f4f1ea;transition:background .3s}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--red-lit);box-shadow:0 0 0 3px rgba(224,65,43,.25)}
+.panel.playing .live{background:rgba(160,16,14,.8)}
+.panel.playing .live i{background:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.hint{position:absolute;right:12px;bottom:12px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:#f4f1ea;background:rgba(14,17,19,.55);padding:5px 10px;border-radius:999px;transition:opacity .4s}
+.panel.playing .hint{opacity:0}
+.meta{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.controls{display:flex;gap:10px;flex-wrap:wrap}
+button{font:500 13px/1 var(--body);color:var(--bone);background:transparent;border:1px solid var(--line);border-radius:999px;padding:9px 16px;cursor:pointer}
+button:hover{border-color:var(--red-lit)}
+button[aria-pressed="true"]{background:var(--red);border-color:var(--red)}
+button:disabled{opacity:.4;cursor:default}
+
+/* frame strip */
+.strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.strip{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.slot{position:relative;aspect-ratio:16/9;border-radius:2px;overflow:hidden;background:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line);
+  display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;padding:0}
+.slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.slot.on{box-shadow:0 0 0 2px var(--red-lit)}
+.slot .n{position:relative;background:rgba(14,17,19,.6);padding:1px 6px;border-radius:2px}
+.slot:disabled{opacity:1;cursor:default}
+.slot.empty::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 9px,rgba(207,214,214,.04) 9px 10px)}
+.note{font-size:14px;color:var(--dim);margin:0}
+
+/* log */
+.log{display:grid;gap:0;border-top:1px solid var(--line)}
+.entry{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:18px 0;border-bottom:1px solid var(--line)}
+@media (max-width:560px){.entry{grid-template-columns:minmax(0,1fr);gap:4px}}
+.entry time{font-family:var(--mono);font-size:12px;color:var(--gold);font-variant-numeric:tabular-nums;padding-top:4px}
+.entry p{margin:0}
+blockquote{margin:0;font-family:var(--quote);font-style:italic;font-size:clamp(24px,3.2vw,30px);line-height:1.3;color:var(--bone);
+  border-left:2px solid var(--red);padding-left:18px}
+
+/* about + follow */
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px}
+@media (max-width:720px){.two{grid-template-columns:minmax(0,1fr)}}
+.two > div{display:grid;gap:12px;align-content:start;min-width:0}
+.two p{margin:0}
+.handles{display:grid;gap:8px;font-family:var(--mono);font-size:14px}
+.handles span{color:var(--dim);font-size:12px}
+footer{border-top:1px solid var(--line);padding-top:20px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+@media (prefers-reduced-motion:reduce){.stage{transition:none}.panel.playing .stage{transform:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <a class="mark" href="#top" aria-label="Zero, home">
+      <span class="plate"><img src="assets/zero-logo.svg" alt="Zero"></span>
+      <small>Live comics<br>from the Dibang Valley</small>
+    </a>
+    <nav aria-label="Sections">
+      <a href="#comic">Comic</a><a href="#log">Writing in public</a><a href="#follow">Follow</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="comic">
+    <div class="eyebrow">Book One · Emuli · Issue 1</div>
+    <h1>The lakes remember <em>everything.</em></h1>
+    <p class="lede">Zero is a story told one living frame at a time. Each panel is a painting that breathes: tap it and the wind moves, the leaves fall, and you hear the valley.</p>
+
+    <div class="panel" id="panel" role="button" tabindex="0" aria-label="Live frame. Tap to play the moment with sound.">
+      <div class="stage"><img id="frameImg" src="assets/frame-001.webp" alt=""><canvas id="fx"></canvas></div>
+      <div class="live"><i></i>LIVE</div>
+      <div class="hint">Tap to play</div>
+    </div>
+    <div class="meta"><span id="frameLabel">Frame 001 · The Seven Lakes</span><span id="frameCount">1 of 12 painted</span></div>
+    <div class="controls">
+      <button id="play" type="button">Play the moment</button>
+      <button id="sound" type="button" aria-pressed="true">Sound on</button>
+    </div>
+  </section>
+
+  <section class="col" aria-labelledby="stripH">
+    <h2 id="stripH">Issue 1, frame by frame</h2>
+    <div class="strip" id="strip"></div>
+    <p class="note">New frames appear here as they're painted. Each one is written, revised and approved before it goes up.</p>
+  </section>
+
+  <section class="col" id="log" aria-labelledby="logH">
+    <h2 id="logH">Writing in public</h2>
+    <blockquote>They say the lakes remember everything.</blockquote>
+    <div class="log">
+      <div class="entry"><time datetime="2026-10-31">31 Oct 2026</time>
+        <p><strong>Frame 001 is up.</strong> The Seven Lakes of the Dibang Valley, 1987. One red tree on the water, wind in the grass, nobody speaking yet. Silence is the subject of the first frame.</p></div>
+      <div class="entry"><time datetime="2026-10-31">31 Oct 2026</time>
+        <p><strong>We found the look.</strong> After five style tests we chose wind and red: tall grass always moving, gold light through mist, and one colour that matters. Red is for what the story cares about.</p></div>
+      <div class="entry"><time datetime="2026-10-30">30 Oct 2026</time>
+        <p><strong>The mark.</strong> Zero is drawn by hand. The Z is a snake coming down from the sky; the O is a tree putting down roots. That's where this site's address comes from.</p></div>
+    </div>
+  </section>
+
+  <section class="col two" id="follow">
+    <div>
+      <h2>What is Zero?</h2>
+      <p>A universe set in the Dibang Valley of Arunachal Pradesh, where the Mishmi hills meet the clouds. Book One follows Arun and Emuli through romance, adventure and old folklore. The same world will grow into vertical dramas, a series, a game and a film.</p>
+    </div>
+    <div>
+      <h2>Follow the story</h2>
+      <p>New frames go out first on Instagram, with the writing notes on X.</p>
+      <div class="handles">
+        <div>Instagram <span>@zerosnaketree, launching soon</span></div>
+        <div>X <span>@zerosnaketree, launching soon</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer><span>Zero · Dibang Valley Diaries</span><span>© 2026 · zerosnaketree.com</span></footer>
+</div>
+
+<script>
+/* To add a frame: push an entry here once it's approved. live = which moment plays on tap. */
+const FRAMES = [
+  {n:1, title:"The Seven Lakes", src:"assets/frame-001.webp", thumb:"assets/frame-001-sm.webp",
+   alt:"Seven mountain lakes in mist, one red tree on the shore shedding leaves into the wind, tall grass in the foreground.",
+   live:{leaves:true, origin:[0.59,0.47], wind:1}}
+];
+const TOTAL = 12;
+
+const panel=document.getElementById('panel'), img=document.getElementById('frameImg'), cv=document.getElementById('fx'),
+      ctx=cv.getContext('2d'), playBtn=document.getElementById('play'), soundBtn=document.getElementById('sound');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+let cur=0, playing=false, soundOn=true, raf=0, leaves=[], t0=0, ac=null;
+
+function show(i){
+  cur=i; const f=FRAMES[i];
+  img.src=f.src; img.alt=f.alt;
+  document.getElementById('frameLabel').textContent=`Frame ${String(f.n).padStart(3,'0')} · ${f.title}`;
+  document.getElementById('frameCount').textContent=`${FRAMES.length} of ${TOTAL} painted`;
+  document.querySelectorAll('.slot').forEach((s,k)=>s.classList.toggle('on',k===i));
+}
+function buildStrip(){
+  const s=document.getElementById('strip');
+  for(let k=0;k<TOTAL;k++){
+    const b=document.createElement('button'); b.type='button'; b.className='slot';
+    const f=FRAMES[k];
+    if(f){ b.innerHTML=`<img src="${f.thumb}" alt=""><span class="n">${String(k+1).padStart(3,'0')}</span>`;
+      b.setAttribute('aria-label',`Frame ${k+1}: ${f.title}`); b.onclick=()=>{show(k);panel.scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})}; }
+    else { b.classList.add('empty'); b.disabled=true; b.innerHTML=`<span class="n">${String(k+1).padStart(3,'0')}</span>`; b.setAttribute('aria-label',`Frame ${k+1}, still being painted`); }
+    s.appendChild(b);
+  }
+}
+
+function size(){ const r=panel.getBoundingClientRect(), d=Math.min(devicePixelRatio||1,2); cv.width=r.width*d; cv.height=r.height*d; }
+function spawn(o){
+  const W=cv.width,H=cv.height;
+  return {x:o[0]*W+(Math.random()-.5)*W*.08, y:o[1]*H+(Math.random()-.5)*H*.08,
+    vx:(0.6+Math.random()*1.4)*W/900, vy:(-0.4+Math.random()*0.8)*H/900,
+    r:(3+Math.random()*4)*W/1100, a:Math.random()*6.28, va:(Math.random()-.5)*.2, life:1,
+    c:Math.random()<.75?'#b3160f':(Math.random()<.5?'#e0412b':'#d8a64a')};
+}
+function frame(ts){
+  const W=cv.width,H=cv.height, el=(ts-t0)/1000, f=FRAMES[cur].live;
+  ctx.clearRect(0,0,W,H);
+  // gust: rises, holds, settles
+  const g=el<1?el:el<4?1:Math.max(0,1-(el-4)/2);
+  if(f.leaves && el<4.5) for(let k=0;k<3;k++) leaves.push(spawn(f.origin));
+  // warm light breathing in through the mist
+  ctx.fillStyle=`rgba(216,166,74,${0.07*g})`; ctx.fillRect(0,0,W,H);
+  for(const p of leaves){
+    p.vx+=0.02*g*W/900; p.vy+=Math.sin(el*3+p.x*.01)*0.02*H/900;
+    p.x+=p.vx*(1+g); p.y+=p.vy; p.a+=p.va; if(el>4) p.life-=.012;
+    ctx.save(); ctx.globalAlpha=Math.max(0,p.life)*.95; ctx.translate(p.x,p.y); ctx.rotate(p.a);
+    ctx.fillStyle=p.c; ctx.beginPath(); ctx.ellipse(0,0,p.r,p.r*.45,0,0,6.28); ctx.fill(); ctx.restore();
+  }
+  leaves=leaves.filter(p=>p.life>0 && p.x<W+40 && p.y>-40 && p.y<H+40);
+  if(el<6.5 || leaves.length) raf=requestAnimationFrame(frame); else stop();
+}
+function wind(){
+  try{
+    ac=ac||new (window.AudioContext||window.webkitAudioContext)(); const now=ac.currentTime, len=7;
+    const buf=ac.createBuffer(1,ac.sampleRate*len,ac.sampleRate), d=buf.getChannelData(0);
+    let last=0; for(let i=0;i<d.length;i++){ last=(last+0.02*(Math.random()*2-1))/1.02; d[i]=last*3.5; }
+    const src=ac.createBufferSource(); src.buffer=buf;
+    const bp=ac.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=0.8;
+    bp.frequency.setValueAtTime(300,now); bp.frequency.linearRampToValueAtTime(900,now+2); bp.frequency.linearRampToValueAtTime(400,now+6);
+    const gn=ac.createGain(); gn.gain.setValueAtTime(0,now); gn.gain.linearRampToValueAtTime(.55,now+1.2);
+    gn.gain.setValueAtTime(.55,now+3.8); gn.gain.linearRampToValueAtTime(0,now+6.5);
+    src.connect(bp).connect(gn).connect(ac.destination); src.start(now); src.stop(now+len);
+    // one low bell, far off, as the gust peaks
+    const o=ac.createOscillator(), og=ac.createGain(); o.type='sine'; o.frequency.value=196;
+    og.gain.setValueAtTime(0,now+1.6); og.gain.linearRampToValueAtTime(.12,now+1.7); og.gain.exponentialRampToValueAtTime(.0001,now+5.5);
+    o.connect(og).connect(ac.destination); o.start(now+1.6); o.stop(now+5.6);
+  }catch(e){}
+}
+function play(){
+  if(playing) return; playing=true; panel.classList.add('playing'); playBtn.disabled=true;
+  if(soundOn) wind();
+  if(reduce){ setTimeout(stop,2500); return; }
+  size(); leaves=[]; t0=performance.now(); raf=requestAnimationFrame(frame);
+}
+function stop(){ cancelAnimationFrame(raf); ctx.clearRect(0,0,cv.width,cv.height); playing=false; panel.classList.remove('playing'); playBtn.disabled=false; }
+
+panel.addEventListener('click',play);
+panel.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();play();} });
+playBtn.addEventListener('click',play);
+soundBtn.addEventListener('click',()=>{ soundOn=!soundOn; soundBtn.setAttribute('aria-pressed',soundOn); soundBtn.textContent=soundOn?'Sound on':'Sound off'; });
+addEventListener('resize',()=>{ if(playing) size(); });
+buildStrip(); show(0);
+</script>
+</body>
+</html>
