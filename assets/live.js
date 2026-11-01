@@ -39,7 +39,7 @@ function play(p){
   p._stop=()=>{cancelAnimationFrame(raf);ctx.clearRect(0,0,cv.width,cv.height);p.classList.remove('playing');if(active===p)active=null;};
   if(reduce){setTimeout(p._stop,2500);return;}
   const r=p.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);cv.width=r.width*d;cv.height=r.height*d;
-  const W=cv.width,H=cv.height,t0=performance.now(),rate=kind==='rain'?6:kind==='snow'?3:1;
+  const W=cv.width,H=cv.height,t0=performance.now(),rate=+(p.dataset.rate||(kind==='rain'?6:kind==='snow'?3:1));
   function frame(ts){
     const el=(ts-t0)/1000;ctx.clearRect(0,0,W,H);
     if(el<4.5&&(kind!=='leaves'||Math.random()<.5))for(let j=0;j<rate;j++)parts.push(spawn(kind,W,H,o));
