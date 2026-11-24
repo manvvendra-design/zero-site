@@ -9,7 +9,7 @@ col = (X - x0)/px - 0.5; row = (y0 - Y)/px - 0.5   # pixel-centre coordinates
 print('LM pixel (centre-based):', round(col,2), round(row,2))
 a = tifffile.imread(src)
 c, r = int(round(col)), int(round(row))
-W0, W1, N0, N1 = 200, 400, 200, 200   # samples west/east/north/south of LM (2 m each)
+W0, W1, N0, N1 = 200, 450, 200, 200   # samples west/east/north/south of LM (2 m each)
 t = a[r-N0:r+N1+1, c-W0:c+W1+1].astype(np.float64)
 assert (t > -1e30).all(), 'nodata in crop'
 h0 = float(a[r, c]); t -= h0

@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { SITES, SITE_ORDER } from './sites.js';
 import { makeAstronaut, makeModel } from './models.js';
+import { loadDem, demH as demHeight, makeSurround } from './terrain.js';
 
 const params = new URLSearchParams(location.search);
 const siteId = SITES[params.get('site')] ? params.get('site') : 'apollo11';
@@ -28,29 +29,8 @@ function vnoise(x, y) {
 function fbm(x, y, o = 5) { let s = 0, a = 0.5, f = 1; for (let i = 0; i < o; i++) { s += a * vnoise(x * f, y * f); f *= 2.03; a *= 0.5; } return s; }
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
-// Real elevation data (where a site has it): NASA heights on a regular grid, +x east, +z south.
-async function loadDem(d) {
-  try {
-    const r = await fetch(new URL('../' + d.url, import.meta.url));
-    if (!r.ok) throw new Error(r.status);
-    // stored as base64 text of little-endian 16-bit samples (a plain text file any static host serves)
-    const bin = atob((await r.text()).trim()), u8 = new Uint8Array(bin.length);
-    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
-    const q = new Uint16Array(u8.buffer);
-    if (q.length !== d.w * d.h) throw new Error('size');
-    const f = new Float32Array(q.length), k = (d.max - d.min) / 65535;
-    for (let i = 0; i < q.length; i++) f[i] = d.min + q[i] * k;
-    return { ...d, z: f, x0: -d.west, z0: -d.north, x1: -d.west + (d.w - 1) * d.spacing, z1: -d.north + (d.h - 1) * d.spacing };
-  } catch (e) { console.warn('Elevation data not loaded, using generated ground', e); return null; }
-}
 const DEM = S.dem ? await loadDem(S.dem) : null;
-function demH(x, z) {
-  const D = DEM, s = D.spacing;
-  const gx = Math.min(D.w - 1.001, Math.max(0, (x - D.x0) / s)), gz = Math.min(D.h - 1.001, Math.max(0, (z - D.z0) / s));
-  const i = Math.floor(gx), j = Math.floor(gz), fx = gx - i, fz = gz - j, w = D.w, a = D.z;
-  const h00 = a[j * w + i], h10 = a[j * w + i + 1], h01 = a[(j + 1) * w + i], h11 = a[(j + 1) * w + i + 1];
-  return (h00 * (1 - fx) + h10 * fx) * (1 - fz) + (h01 * (1 - fx) + h11 * fx) * fz;
-}
+const demH = (x, z) => demHeight(DEM, x, z);
 
 const SIZE = 420, HALF = SIZE / 2;
 // walkable area: a circle on generated ground, the data's box (less a margin) on real ground
@@ -176,6 +156,7 @@ if (DEM) gGeo.translate((DEM.x0 + DEM.x1) / 2, 0, (DEM.z0 + DEM.z1) / 2);
 const ground = new THREE.Mesh(gGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }));
 ground.receiveShadow = true;
 scene.add(ground);
+if (DEM) scene.add(makeSurround(THREE, DEM, new THREE.Color(S.ground[0]).lerp(new THREE.Color(S.ground[1]), 0.6)));
 if (S.ocean) {
   const sea = new THREE.Mesh(new THREE.PlaneGeometry(2000, 3000), new THREE.MeshStandardMaterial({ color: 0x2f6f95, roughness: 0.25, metalness: 0.1 }));
   sea.rotation.x = -Math.PI / 2; sea.position.set(1100, -1.6, 0); scene.add(sea);
@@ -572,4 +553,5 @@ function resize() {
 addEventListener('resize', resize);
 resize();
 requestAnimationFrame(step);
+if (siteId === 'apollo11') $('landBtn').hidden = false;
 window.__walk = { P, cam, items, inspect, S, height, dem: () => DEM && demH };

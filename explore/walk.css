@@ -42,3 +42,4 @@ body.touch .prompt { bottom: 112px; }
   .walk .panel { bottom: 0; }
 }
 #scene:focus { outline: none; }
+.walk [hidden] { display: none !important; }

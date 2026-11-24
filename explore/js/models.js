@@ -108,6 +108,22 @@ function makeLM() {
   g.add(box(0.9, 0.05, 0.6, M.silver, 0, 2.3, 2.1));
   return g;
 }
+// the whole lunar module as it flew down: descent stage plus the crew cabin (ascent stage) on top
+function makeLMFull() {
+  const g = makeLM();
+  const cab = new THREE.Group(); cab.position.y = 3.0; g.add(cab);
+  const grey = M.grey, dark = M.dark;
+  // main cabin: a wide faceted drum, front face toward +z
+  const drum = cyl(1.45, 1.55, 2.0, grey, 0, 1.25, -0.2, 8); drum.rotation.y = Math.PI / 8; cab.add(drum);
+  const front = box(1.9, 1.5, 0.9, grey, 0, 1.35, 1.05); cab.add(front);
+  for (const s of [-1, 1]) { const w = box(0.42, 0.42, 0.04, dark, s * 0.5, 1.75, 1.52); w.rotation.y = s * -0.35; w.rotation.x = 0.2; cab.add(w); }
+  cab.add(box(0.85, 0.85, 0.06, dark, 0, 0.8, 1.52)); // forward hatch
+  cab.add(cyl(0.48, 0.48, 0.55, grey, 0, 2.5, -0.2, 16)); // docking tunnel
+  cab.add(box(1.3, 0.9, 1.0, grey, 0, 1.0, -1.6)); // aft equipment bay
+  const dish = cyl(0.42, 0.05, 0.18, M.silver, 1.25, 2.55, -0.9, 16); dish.rotation.z = -0.6; cab.add(dish);
+  for (const s of [-1, 1]) cab.add(box(0.25, 0.25, 0.25, M.silver, s * 1.6, 2.0, 0.6)); // thruster quads
+  return g;
+}
 function makeFlag() {
   const g = new THREE.Group();
   g.add(rod([-0.9, 0.05, 0], [0.95, 0.05, 0.2], 0.018, M.silver));
@@ -277,6 +293,7 @@ function makeBoulder(s) {
 export function makeModel(def, groundColor) {
   switch (def.kind) {
     case 'lm': return makeLM();
+    case 'lmfull': return makeLMFull();
     case 'flag': return makeFlag();
     case 'lrrr': return makeLRRR();
     case 'psep': return makePSEP();
