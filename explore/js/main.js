@@ -568,6 +568,8 @@ playBtn.addEventListener('click', () => (state.playing ? stop() : play()));
 
 // ---------- intro ----------
 const intro = document.getElementById('intro');
+// the Missions button brings the start screen (and its mission buttons) back at any time
+document.getElementById('missionsBtn').addEventListener('click', () => { closePanel(); intro.classList.remove('gone'); });
 document.getElementById('startToday').addEventListener('click', () => { intro.classList.add('gone'); flyTo(new THREE.Vector3(0, 0, 0), 120, 2000); });
 document.getElementById('startReplay').addEventListener('click', () => { intro.classList.add('gone'); setJd(START_JD); focusEarthWide(); play(); });
 function focusEarthWide() { state.focus = () => bodies.earth.obj.position; flyTo(bodies.earth.obj.position.clone(), 40, 1800); flight.follow = state.focus; }
