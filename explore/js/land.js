@@ -80,6 +80,7 @@ sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -30, right: 30, top: 30, bottom: -30, near: 1, far: 1200 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.05;
+sun.shadow.camera.layers.enable(1); // so the lander (layer 1) still casts its shadow
 scene.add(sun, sun.target, new THREE.HemisphereLight(0x8a94a8, 0x3c3a37, 0.55));
 
 function hash(x, y) { const h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return h - Math.floor(h); }
@@ -154,6 +155,8 @@ target.rotation.x = -Math.PI / 2; target.position.set(0, ground(0, 0) + 0.15, 0)
 
 // the lunar module, facing west (the way it flew)
 const lm = makeModel({ kind: 'lmfull' }, S.ground[1]);
+// the lander lives on layer 1: the outside camera and the sun's shadow see it; from the window it is hidden so it never blocks the view
+lm.traverse((o) => o.layers.set(1));
 lm.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 lm.rotation.y = -Math.PI / 2;
 scene.add(lm);
@@ -182,6 +185,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'ArrowUp' || e.code === 'KeyR') { rodClick(+1); e.preventDefault(); }
   if (e.code === 'ArrowDown' || e.code === 'KeyF') { rodClick(-1); e.preventDefault(); }
   if (e.code === 'KeyC') toggleView();
+  if (e.code === 'KeyV') resetCam();
   if (e.code === 'Space' && !L.running && !L.done) start();
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
@@ -194,20 +198,56 @@ $('viewBtn').addEventListener('click', () => toggleView());
 
 const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 };
 const joyEl = $('joy'), knob = $('joyKnob');
+// free 360-degree camera: orbit the lander (outside view) or look around the cabin (window view)
+const CAM0 = { yaw: Math.atan2(26, 4), pitch: 0.33, dist: 28 };
+const cam = { ...CAM0, wYaw: 0, wPitch: 0 };
+const looks = new Map(); // pointers that move the camera (mouse drag, or touches on the right side)
+let pinch0 = 0;
+const lookBy = (dx, dy) => {
+  if (view === 'chase') { cam.yaw -= dx; cam.pitch += dy; }
+  else { cam.wYaw -= dx; cam.wPitch -= dy; }
+  clampCam();
+};
+const zoomBy = (f) => { cam.dist = Math.min(600, Math.max(7, cam.dist * f)); };
+function clampCam() {
+  cam.pitch = Math.min(1.55, Math.max(-0.35, cam.pitch));
+  cam.wYaw = Math.max(-2.6, Math.min(2.6, cam.wYaw)); cam.wPitch = Math.max(-0.9, Math.min(0.9, cam.wPitch));
+}
+function resetCam() { Object.assign(cam, CAM0, { wYaw: 0, wPitch: 0 }); }
+const pinchDist = () => { const p = [...looks.values()]; return p.length < 2 ? 0 : Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); };
 canvas.addEventListener('pointerdown', (e) => {
-  if (joy.id !== null) return;
-  Object.assign(joy, { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: 0, y: 0 });
-  joyEl.style.transform = `translate(${e.clientX - 60}px, ${e.clientY - 60}px)`; joyEl.classList.add('on');
+  canvas.focus({ preventScroll: true });
+  // touch: left side is the attitude stick, right side turns the camera; mouse: drag turns the camera (fly with W A S D)
+  if (e.pointerType === 'touch' && e.clientX < innerWidth * 0.45 && joy.id === null) {
+    Object.assign(joy, { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: 0, y: 0 });
+    joyEl.style.transform = `translate(${e.clientX - 60}px, ${e.clientY - 60}px)`; joyEl.classList.add('on');
+  } else {
+    looks.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    pinch0 = pinchDist();
+  }
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', (e) => {
-  if (e.pointerId !== joy.id) return;
-  let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const l = Math.hypot(dx, dy), mx = 50;
-  if (l > mx) { dx *= mx / l; dy *= mx / l; }
-  joy.x = dx / mx; joy.y = dy / mx; knob.style.transform = `translate(${dx}px, ${dy}px)`;
+  if (e.pointerId === joy.id) {
+    let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const l = Math.hypot(dx, dy), mx = 50;
+    if (l > mx) { dx *= mx / l; dy *= mx / l; }
+    joy.x = dx / mx; joy.y = dy / mx; knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    return;
+  }
+  const lp = looks.get(e.pointerId); if (!lp) return;
+  const dx = e.clientX - lp.x, dy = e.clientY - lp.y; lp.x = e.clientX; lp.y = e.clientY;
+  if (looks.size >= 2) { const d = pinchDist(); if (pinch0 > 0 && d > 0) zoomBy(pinch0 / d); pinch0 = d; return; }
+  const k = e.pointerType === 'touch' ? 0.006 : 0.005;
+  lookBy(dx * k, dy * k);
 });
-const endJoy = (e) => { if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; joyEl.classList.remove('on'); } };
-canvas.addEventListener('pointerup', endJoy); canvas.addEventListener('pointercancel', endJoy);
+const endPtr = (e) => {
+  if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; joyEl.classList.remove('on'); }
+  looks.delete(e.pointerId); pinch0 = pinchDist();
+};
+canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
+canvas.addEventListener('dblclick', resetCam);
+canvas.addEventListener('wheel', (e) => { zoomBy(1 + Math.max(-0.3, Math.min(0.3, e.deltaY * 0.0012))); e.preventDefault(); }, { passive: false });
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 let padPrev = [];
 function readPad() {
@@ -221,8 +261,9 @@ function readPad() {
     if (edge(13) || edge(4)) rodClick(-1); // d-pad down or L1: faster
     if (edge(0) && !L.running && !L.done) start();
     if (edge(3)) toggleView();
+    if (edge(10) || edge(11)) resetCam(); // stick click: reset camera
     padPrev = b;
-    return { x: dz(p.axes[0]), y: dz(p.axes[1]) };
+    return { x: dz(p.axes[0]), y: dz(p.axes[1]), lx: dz(p.axes[2] || 0), ly: dz(p.axes[3] || 0) };
   }
   return null;
 }
@@ -323,7 +364,10 @@ function step(now) {
   let ix = 0, iy = 0;
   if (keys.has('KeyA')) ix -= 1; if (keys.has('KeyD')) ix += 1;
   if (keys.has('KeyW')) iy -= 1; if (keys.has('KeyS')) iy += 1;
-  if (pad) { ix += pad.x; iy += pad.y; }
+  if (pad) { ix += pad.x; iy += pad.y; lookBy(pad.lx * 2.4 * dt, pad.ly * 1.6 * dt); }
+  { const q = (keys.has('KeyE') ? 1 : 0) - (keys.has('KeyQ') ? 1 : 0); if (q) lookBy(q * 1.8 * dt, 0); }
+  if (keys.has('Equal') || keys.has('NumpadAdd')) zoomBy(1 - 1.2 * dt);
+  if (keys.has('Minus') || keys.has('NumpadSubtract')) zoomBy(1 + 1.2 * dt);
   ix += joy.x; iy += joy.y;
   const inp = { x: Math.max(-1, Math.min(1, ix)), y: Math.max(-1, Math.min(1, iy)) };
   if (window.__land && window.__land.autopilot && L.running) Object.assign(inp, window.__land.autopilot(L));
@@ -348,13 +392,19 @@ function step(now) {
   hud.get.textContent = getStr(L.t);
 
   // camera
+  camera.layers.set(0); if (view === 'chase') camera.layers.enable(1);
   if (view === 'chase') {
-    camera.position.set(L.pos.x + 26, L.pos.y + 9, L.pos.z + 4);
-    camera.lookAt(L.pos.x - 30, Math.max(gz, L.pos.y - 25), L.pos.z);
+    // orbit the lander: any direction, from just above the ground to straight down
+    const cp = Math.cos(cam.pitch), tY = L.pos.y + 3;
+    camera.position.set(L.pos.x + Math.sin(cam.yaw) * cp * cam.dist, tY + Math.sin(cam.pitch) * cam.dist, L.pos.z + Math.cos(cam.yaw) * cp * cam.dist);
+    const ch = ground(camera.position.x, camera.position.z) + 1.5;
+    if (camera.position.y < ch) camera.position.y = ch;
+    camera.lookAt(L.pos.x, tY, L.pos.z);
   } else {
-    // Armstrong's window: front of the cabin, looking ahead and down
+    // Armstrong's window: front of the cabin, looking ahead and down; drag to turn your head
     camera.position.set(L.pos.x - 1.6, L.pos.y + 4.6, L.pos.z + 0.5);
-    camera.lookAt(L.pos.x - 40, L.pos.y + 4.6 - 40 * Math.tan(28 * DEG), L.pos.z);
+    const yaw = cam.wYaw, pit = -28 * DEG + cam.wPitch;
+    camera.lookAt(camera.position.x - Math.cos(yaw) * Math.cos(pit) * 40, camera.position.y + Math.sin(pit) * 40, camera.position.z + Math.sin(yaw) * Math.cos(pit) * 40);
   }
   // the light and its shadow follow the lander's shadow on the ground
   const sh = L.pos.clone().addScaledVector(sunDir, -(L.pos.y - gz) / sunDir.y);
@@ -373,4 +423,4 @@ addEventListener('resize', resize); resize();
 $('introTitle').textContent = 'Land the Eagle';
 $('startBtn').disabled = false;
 requestAnimationFrame(step);
-window.__land = { L, start, land, ground, CALLS, REAL, FUEL0 };
+window.__land = { L, start, land, ground, CALLS, REAL, FUEL0, cam, resetCam, setView: (v) => { if (v !== view) toggleView(); } };

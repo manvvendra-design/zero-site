@@ -274,6 +274,9 @@ addEventListener('blur', () => keys.clear());
 // mouse / touch look and joystick
 const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 };
 const look = { id: null, x: 0, y: 0 };
+const pinch = new Map(); let pinch0 = 0; // two fingers on the camera side: pinch to zoom
+const pinchDist = () => { const p = [...pinch.values()]; return p.length < 2 ? 0 : Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); };
+const zoomBy = (f) => { cam.dist = Math.min(45, Math.max(2.2, cam.dist * f)); };
 const joyEl = $('joy'), knob = $('joyKnob');
 const tap = new Map();
 canvas.addEventListener('pointerdown', (e) => {
@@ -283,7 +286,10 @@ canvas.addEventListener('pointerdown', (e) => {
   if (touch && e.clientX < innerWidth * 0.45 && joy.id === null) {
     Object.assign(joy, { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: 0, y: 0 });
     joyEl.style.transform = `translate(${e.clientX - 60}px, ${e.clientY - 60}px)`; joyEl.classList.add('on');
-  } else if (look.id === null) Object.assign(look, { id: e.pointerId, x: e.clientX, y: e.clientY });
+  } else {
+    if (look.id === null) Object.assign(look, { id: e.pointerId, x: e.clientX, y: e.clientY });
+    if (touch) { pinch.set(e.pointerId, { x: e.clientX, y: e.clientY }); pinch0 = pinchDist(); }
+  }
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', (e) => {
@@ -291,7 +297,10 @@ canvas.addEventListener('pointermove', (e) => {
     let dx = e.clientX - joy.ox, dy = e.clientY - joy.oy; const l = Math.hypot(dx, dy), mx = 50;
     if (l > mx) { dx *= mx / l; dy *= mx / l; }
     joy.x = dx / mx; joy.y = dy / mx; knob.style.transform = `translate(${dx}px, ${dy}px)`;
-  } else if (e.pointerId === look.id) {
+  }
+  const pp = pinch.get(e.pointerId);
+  if (pp) { pp.x = e.clientX; pp.y = e.clientY; if (pinch.size >= 2) { const d = pinchDist(); if (pinch0 > 0 && d > 0) zoomBy(pinch0 / d); pinch0 = d; look.x = e.clientX; look.y = e.clientY; return; } }
+  if (e.pointerId === look.id) {
     const k = e.pointerType === 'touch' ? 0.006 : 0.0045;
     cam.yaw -= (e.clientX - look.x) * k; cam.pitch += (e.clientY - look.y) * k;
     look.x = e.clientX; look.y = e.clientY;
@@ -302,9 +311,11 @@ const endPtr = (e) => {
   if (e.type === 'pointerup' && tp && Math.hypot(e.clientX - tp.x, e.clientY - tp.y) < 10 && performance.now() - tp.t < 450) walkTo(e.clientX, e.clientY);
   if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; joyEl.classList.remove('on'); }
   if (e.pointerId === look.id) look.id = null;
+  if (pinch.delete(e.pointerId)) { pinch0 = pinchDist(); if (look.id === null && pinch.size) { const [id, q] = [...pinch.entries()][0]; Object.assign(look, { id, x: q.x, y: q.y }); } }
 };
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
-canvas.addEventListener('wheel', (e) => { cam.dist = Math.min(14, Math.max(3, cam.dist * (1 + e.deltaY * 0.001))); e.preventDefault(); }, { passive: false });
+canvas.addEventListener('wheel', (e) => { zoomBy(1 + Math.max(-0.3, Math.min(0.3, e.deltaY * 0.001))); e.preventDefault(); }, { passive: false });
+canvas.addEventListener('dblclick', () => { cam.yaw = P.yaw + Math.PI; cam.pitch = 0.32; cam.dist = 6.5; });
 // tap or click the ground (or a marker) to walk there
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 const goalRing = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.5, 32), new THREE.MeshBasicMaterial({ color: 0xFF2D46, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide }));
@@ -427,7 +438,9 @@ function step(now) {
     if (pad.inspect) { if (!panel.hidden) closePanel(); else inspectNear(); }
     if (pad.back) closePanel();
   }
-  cam.pitch = Math.min(1.2, Math.max(-0.25, cam.pitch));
+  if (keys.has('Equal') || keys.has('NumpadAdd')) zoomBy(1 - 1.2 * dt);
+  if (keys.has('Minus') || keys.has('NumpadSubtract')) zoomBy(1 + 1.2 * dt);
+  cam.pitch = Math.min(1.5, Math.max(-0.45, cam.pitch));
   let mag = Math.hypot(mx, mz);
   if (mag > 1) { mx /= mag; mz /= mag; mag = 1; }
   if (!started) mag = 0;
