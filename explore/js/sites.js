@@ -7,7 +7,7 @@ const NSSDCA = (id) => `https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.actio
 const ALSJ = 'https://www.hq.nasa.gov/alsj/a11/a11.html';
 // specific Apollo Lunar Surface Journal pages (the old hq.nasa.gov paths now land on a general index)
 export const ALSJ11 = (page) => `https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/${page}`;
-export const LROC_FLAGS = 'https://www.lroc.asu.edu/images/537';
+export const LROC_FLAGS = 'https://lroc.im-ldi.com/images/537';
 
 export const SITES = {
   apollo11: {
@@ -44,15 +44,15 @@ export const SITES = {
         src: ALSJ11('a11.step.html'), srcLabel: 'NASA Apollo Lunar Surface Journal: First Steps' },
       { id: 'a11-lrrr', at: [-3, 24.1], name: 'Laser reflector',
         title: 'A mirror that still works',
-        text: 'This panel holds 100 glass corner-cube prisms. Observatories on Earth still fire lasers at it and time the echo, measuring the distance to the Moon to within centimetres. That is how we know the Moon moves about 3.8 cm farther from Earth every year.',
-        src: NSSDCA('1969-059C'), srcLabel: 'NASA NSSDCA record: Apollo 11 lunar module' },
+        text: 'The Laser Ranging Retro-Reflector bounces laser light straight back to where it came from. Telescopes on Earth fire lasers at it and time the echo to measure the distance to the Moon very precisely. Decades later it was still in use, with a dedicated laser station at McDonald Observatory in Texas.',
+        src: ALSJ11('a11.clsout.html'), srcLabel: 'NASA Apollo Lunar Surface Journal: EASEP deployment' },
       { id: 'a11-psep', at: [-8, 29.6], name: 'Moonquake detector',
         title: 'Listening for moonquakes',
         text: 'The Passive Seismic Experiment was a seismometer powered by two solar panels. Armstrong and Aldrin carried it and the laser reflector about 20 metres south of Eagle. It felt moonquakes, meteorite hits and even the astronauts’ footsteps.',
         src: ALSJ11('a11.clsout.html'), srcLabel: 'NASA Apollo Lunar Surface Journal: EASEP deployment' },
       { id: 'a11-flag', at: [-7, -6.6], name: 'Fallen flag',
         title: 'Blown over at lift-off',
-        text: 'The flag stood about 11 metres from the centre of the lander. Aldrin said the engine exhaust blew it over when Eagle’s top half took off. In 2012, NASA’s Lunar Reconnaissance Orbiter photographed the shadows of the flags at Apollo 12, 16 and 17, but found none at Apollo 11.',
+        text: 'The flag stood about 11 metres from the centre of the lander. Aldrin said the engine exhaust blew it over when Eagle’s top half took off. In 2012, NASA’s Lunar Reconnaissance Orbiter found flags still standing and casting shadows at every Apollo site except Apollo 11.',
         src: LROC_FLAGS, srcLabel: 'NASA LROC: Apollo flags still standing' },
       { id: 'a11-prints', at: [3.4, -2.6], name: 'Boot prints',
         title: 'The first footprints',

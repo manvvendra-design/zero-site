@@ -26,7 +26,7 @@ export const QUESTIONS = [
   { id: 'q-flag', needs: 'a11-flag',
     q: 'What happened to the flag when Eagle’s top half took off?',
     a: ['The engine exhaust blew it over', 'The astronauts took it back to Earth', 'It is still standing today', 'It was moved to the laser reflector'],
-    why: 'Aldrin said the exhaust blew it over. Photos from orbit in 2012 show flag shadows at Apollo 12, 16 and 17, but none at Apollo 11.',
+    why: 'Aldrin said the exhaust blew it over. Photos from orbit in 2012 show flags still casting shadows at every Apollo site except Apollo 11.',
     src: LROC_FLAGS, srcLabel: 'NASA LROC: Apollo flags still standing' },
   { id: 'q-gravity', needs: 'a11-prints',
     q: 'How strong is gravity on the Moon compared with Earth?',
