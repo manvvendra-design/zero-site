@@ -1,5 +1,6 @@
 // Code-built 3D models: the astronaut and real spacecraft hardware, simplified from public diagrams.
 import * as THREE from 'three';
+import { upgradeLM } from './nasa3d.js';
 
 export const mat = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.75, metalness: 0, ...o });
 const M = {
@@ -292,8 +293,8 @@ function makeBoulder(s) {
 
 export function makeModel(def, groundColor) {
   switch (def.kind) {
-    case 'lm': return makeLM();
-    case 'lmfull': return makeLMFull();
+    case 'lm': { const g = makeLM(); if (def.nasa !== false) upgradeLM(g, false); return g; }
+    case 'lmfull': { const g = makeLMFull(); if (def.nasa !== false) upgradeLM(g, true); return g; }
     case 'flag': return makeFlag();
     case 'lrrr': return makeLRRR();
     case 'psep': return makePSEP();

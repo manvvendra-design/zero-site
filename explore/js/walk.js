@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { SITES, SITE_ORDER } from './sites.js';
 import { makeAstronaut, makeModel } from './models.js';
+import { moonEnv } from './nasa3d.js';
 import { loadDem, demH as demHeight, makeSurround, regolithTexture, regolithMaterial, demAlbedo, rockGeometry } from './terrain.js';
 import * as M from './mission.js';
 
@@ -73,6 +74,7 @@ function height(x, z) {
 // ---------- renderer & scene ----------
 const canvas = $('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+moonEnv(renderer); // reflections for NASA's lander model
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;

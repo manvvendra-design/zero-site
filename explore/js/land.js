@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { SITES } from './sites.js';
 import { makeModel } from './models.js';
+import { moonEnv } from './nasa3d.js';
 import { recordLanding } from './mission.js';
 import { loadDem, demH, makeSurround, regolithTexture, regolithMaterial, demAlbedo, rockGeometry } from './terrain.js';
 
@@ -66,6 +67,7 @@ const ground = (x, z) => demH(DEM, x, z);
 
 const canvas = $('scene');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+moonEnv(renderer); // reflections for NASA's lander model
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -164,7 +166,7 @@ lm.traverse((o) => { if (o.isMesh) o.castShadow = true; });
 lm.rotation.y = -Math.PI / 2;
 scene.add(lm);
 const plume = new THREE.Mesh(new THREE.ConeGeometry(0.7, 3, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xbfd4ff, transparent: true, opacity: 0.25, depthWrite: false }));
-plume.rotation.x = Math.PI; plume.position.y = -1.2; lm.add(plume);
+plume.rotation.x = Math.PI; plume.position.y = -1.2; plume.userData.keep = true; lm.add(plume);
 // blowing dust: a thin sheet under the engine once low enough (Armstrong noticed it below about 100 ft)
 const dust = new THREE.Mesh(new THREE.RingGeometry(1, 40, 48, 1), new THREE.MeshBasicMaterial({ color: 0xb9b5ad, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
 dust.rotation.x = -Math.PI / 2; scene.add(dust);
