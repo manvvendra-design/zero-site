@@ -33,7 +33,10 @@ async function loadDem(d) {
   try {
     const r = await fetch(new URL('../' + d.url, import.meta.url));
     if (!r.ok) throw new Error(r.status);
-    const q = new Uint16Array(await r.arrayBuffer());
+    // stored as base64 text of little-endian 16-bit samples (a plain text file any static host serves)
+    const bin = atob((await r.text()).trim()), u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const q = new Uint16Array(u8.buffer);
     if (q.length !== d.w * d.h) throw new Error('size');
     const f = new Float32Array(q.length), k = (d.max - d.min) / 65535;
     for (let i = 0; i < q.length; i++) f[i] = d.min + q[i] * k;

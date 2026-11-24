@@ -18,7 +18,7 @@ export const SITES = {
     craters: [],
     // Real ground: NASA LROC NAC elevation model NAC_DTM_APOLLO11, 2 m per sample, cut 1.2 km x 0.8 km
     // around the lander by tools/prep_dem.py. +x = east, +z = south, heights in metres relative to the lander.
-    dem: { url: 'data/apollo11_dem.bin', w: 601, h: 401, spacing: 2, west: 400, north: 400, min: -35.8187, max: 10.7133,
+    dem: { url: 'data/apollo11_dem.b64.txt', w: 601, h: 401, spacing: 2, west: 400, north: 400, min: -35.8187, max: 10.7133,
       src: 'https://wms.lroc.asu.edu/lroc/view_rdr/NAC_DTM_APOLLO11' },
     spawn: [6, 13], face: [0, 0],
     models: [

@@ -15,8 +15,8 @@ assert (t > -1e30).all(), 'nodata in crop'
 h0 = float(a[r, c]); t -= h0
 lo, hi = float(t.min()), float(t.max())
 q = np.round((t - lo)/(hi - lo)*65535).astype('<u2')
-q.tofile(out)
+import base64
+open(out, 'w').write(base64.b64encode(q.tobytes()).decode())
 err = np.abs(q/65535*(hi-lo)+lo - t).max()
 meta = dict(w=t.shape[1], h=t.shape[0], spacing=2, west=W0*2, north=N0*2, min=round(lo,4), max=round(hi,4), lmPixel=[c, r], quantErr_m=round(float(err),4))
 print(json.dumps(meta))
-np.save(out+'.npy', t)
