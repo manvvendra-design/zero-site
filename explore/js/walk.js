@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { SITES, SITE_ORDER } from './sites.js';
 import { makeAstronaut, makeModel } from './models.js';
-import { loadDem, demH as demHeight, makeSurround } from './terrain.js';
+import { loadDem, demH as demHeight, makeSurround, regolithTexture, regolithMaterial, demAlbedo, rockGeometry } from './terrain.js';
 import * as M from './mission.js';
 
 const params = new URLSearchParams(location.search);
@@ -87,13 +87,13 @@ if (S.body === 'mars') scene.fog = new THREE.Fog(0xc99a72, 90, 420);
 if (S.body === 'earth') scene.fog = new THREE.Fog(0xbcd6ec, 160, 900);
 
 const sunDir = new THREE.Vector3().setFromSphericalCoords(1, (90 - S.sun.el) * DEG, S.sun.az * DEG);
-const sun = new THREE.DirectionalLight(0xffffff, S.body === 'mars' ? 2.4 : S.body === 'earth' ? 2.6 : 3.2);
+const sun = new THREE.DirectionalLight(0xfffaf2, S.body === 'mars' ? 2.4 : S.body === 'earth' ? 2.6 : S.dem ? 3.8 : 3.2);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 260 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
 scene.add(sun, sun.target);
-const hemi = S.body === 'moon' ? new THREE.HemisphereLight(0x8a94a8, 0x3c3a37, 0.55)
+const hemi = S.body === 'moon' ? new THREE.HemisphereLight(0x9aa3b5, 0x57534d, DEM ? 0.34 : 0.55)
   : S.body === 'mars' ? new THREE.HemisphereLight(0xe2b48c, 0x6b3a22, 0.9)
     : new THREE.HemisphereLight(0xcfe4f7, 0x6d6a50, 1.1);
 scene.add(hemi);
@@ -149,23 +149,50 @@ if (DEM) gGeo.translate((DEM.x0 + DEM.x1) / 2, 0, (DEM.z0 + DEM.z1) / 2);
     const n = fbm(x / 9 + 50, z / 9, 3) * 0.7 + vnoise(x * 2.1, z * 2.1) * 0.3;
     c.copy(c2).lerp(c1, Math.min(1, Math.max(0, n * 1.25 - 0.1 + (DEM ? 0 : h * 0.04))));
     if (S.ocean && h < -1.2) c.set(0xd9cfa6);
+    if (DEM) c.multiplyScalar(demAlbedo(DEM, x, z));
     col.set([c.r, c.g, c.b], i * 3);
   }
   gGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   gGeo.computeVertexNormals();
 }
-const ground = new THREE.Mesh(gGeo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }));
+const REGO = S.body === 'moon' ? regolithTexture(THREE) : null;
+const ground = new THREE.Mesh(gGeo, REGO ? regolithMaterial(THREE, REGO, { w: DEM ? DEM.x1 - DEM.x0 : SIZE, d: DEM ? DEM.z1 - DEM.z0 : SIZE }) : new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }));
 ground.receiveShadow = true;
 scene.add(ground);
-if (DEM) scene.add(makeSurround(THREE, DEM, new THREE.Color(S.ground[0]).lerp(new THREE.Color(S.ground[1]), 0.6)));
+if (DEM) { const sr = makeSurround(THREE, DEM, new THREE.Color(S.ground[0]).lerp(new THREE.Color(S.ground[1]), 0.6)); if (REGO) sr.material = regolithMaterial(THREE, REGO, { w: 9000, d: 9000, color: sr.material.color }); scene.add(sr); }
 if (S.ocean) {
   const sea = new THREE.Mesh(new THREE.PlaneGeometry(2000, 3000), new THREE.MeshStandardMaterial({ color: 0x2f6f95, roughness: 0.25, metalness: 0.1 }));
   sea.rotation.x = -Math.PI / 2; sea.position.set(1100, -1.6, 0); scene.add(sea);
 }
 
+// rocks on real ground: irregular shapes, many small and few large, more of them on fresh crater rims
+if (DEM) {
+  const mat = new THREE.MeshStandardMaterial({ color: 0x77746f, flatShading: true, roughness: 0.95, bumpMap: REGO, bumpScale: 0.8 });
+  const VAR = 4, per = matchMedia('(pointer: coarse)').matches ? 300 : 600, R = 320; // fewer on phones
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s3 = new THREE.Vector3(), v3 = new THREE.Vector3();
+  for (let k = 0; k < VAR; k++) {
+    const im = new THREE.InstancedMesh(rockGeometry(THREE, k + 1), mat, per);
+    im.castShadow = true; im.receiveShadow = true;
+    let placed = 0;
+    for (let t = 0; placed < per && t < per * 6; t++) {
+      const i = k * 100000 + t;
+      const x = (hash(i, 31.7) - 0.5) * 2 * R, z = (hash(i, 57.3) - 0.5) * 2 * R;
+      const keep = 0.25 + Math.max(0, demAlbedo(DEM, x, z) - 1) * 3.5; // fresh rims keep far more rocks
+      if (hash(i, 7.7) > keep) continue;
+      const r = 0.04 + Math.pow(hash(i, 3.3), 5) * 0.9;
+      const clear = keepClear.some(([px, pz]) => Math.hypot(px - x, pz - z) < 3.5) || Math.hypot(x, z) < 6;
+      q.setFromEuler(new THREE.Euler(hash(i, 1) * 0.6, hash(i, 2) * 6.3, hash(i, 4) * 0.6));
+      s3.set(r * (0.9 + hash(i, 5) * 0.5), r, r * (0.9 + hash(i, 6) * 0.5)); v3.set(x, height(x, z) + r * 0.05, z);
+      if (clear) s3.setScalar(0.0001);
+      im.setMatrixAt(placed++, m4.compose(v3, q, s3));
+    }
+    im.count = placed;
+    scene.add(im);
+  }
+}
 // scattered rocks
 {
-  const n = S.body === 'earth' ? 0 : S.body === 'mars' ? 700 : 900;
+  const n = S.body === 'earth' || DEM ? 0 : S.body === 'mars' ? 700 : 900;
   if (n) {
     const geo = new THREE.DodecahedronGeometry(1, 0);
     const im = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ color: new THREE.Color(S.ground[1]).multiplyScalar(0.92), flatShading: true, roughness: 1 }), n);

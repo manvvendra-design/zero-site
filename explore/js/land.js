@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { SITES } from './sites.js';
 import { makeModel } from './models.js';
 import { recordLanding } from './mission.js';
-import { loadDem, demH, makeSurround } from './terrain.js';
+import { loadDem, demH, makeSurround, regolithTexture, regolithMaterial, demAlbedo, rockGeometry } from './terrain.js';
 
 const S = SITES.apollo11;
 const $ = (id) => document.getElementById(id);
@@ -76,13 +76,13 @@ scene.background = new THREE.Color(0x000000);
 const camera = new THREE.PerspectiveCamera(55, 1, 0.5, 6000);
 
 const sunDir = new THREE.Vector3().setFromSphericalCoords(1, (90 - S.sun.el) * DEG, S.sun.az * DEG);
-const sun = new THREE.DirectionalLight(0xffffff, 3.2);
+const sun = new THREE.DirectionalLight(0xfffaf2, 3.8);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -30, right: 30, top: 30, bottom: -30, near: 1, far: 1200 });
 sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.05;
 sun.shadow.camera.layers.enable(1); // so the lander (layer 1) still casts its shadow
-scene.add(sun, sun.target, new THREE.HemisphereLight(0x8a94a8, 0x3c3a37, 0.55));
+scene.add(sun, sun.target, new THREE.HemisphereLight(0x9aa3b5, 0x57534d, 0.34));
 
 function hash(x, y) { const h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return h - Math.floor(h); }
 {
@@ -117,6 +117,7 @@ const earth = sprite(92, (c) => {
 });
 
 // ground from NASA's elevation model
+const REGO = regolithTexture(THREE);
 {
   const geo = new THREE.PlaneGeometry(DEM.x1 - DEM.x0, DEM.z1 - DEM.z0, DEM.w - 1, DEM.h - 1);
   geo.rotateX(-Math.PI / 2); geo.translate((DEM.x0 + DEM.x1) / 2, 0, (DEM.z0 + DEM.z1) / 2);
@@ -126,18 +127,19 @@ const earth = sprite(92, (c) => {
     const x = p.getX(i), z = p.getZ(i);
     p.setY(i, ground(x, z));
     c.copy(c2).lerp(c1, 0.35 + 0.4 * hash(Math.floor(x / 3), Math.floor(z / 3)) * 0.5);
+    c.multiplyScalar(demAlbedo(DEM, x, z));
     col.set([c.r, c.g, c.b], i * 3);
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   geo.computeVertexNormals();
-  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0 }));
+  const m = new THREE.Mesh(geo, regolithMaterial(THREE, REGO, { w: DEM.x1 - DEM.x0, d: DEM.z1 - DEM.z0 }));
   m.receiveShadow = true; scene.add(m);
 }
-scene.add(makeSurround(THREE, DEM, new THREE.Color(S.ground[0]).lerp(new THREE.Color(S.ground[1]), 0.6)));
+{ const sr = makeSurround(THREE, DEM, new THREE.Color(S.ground[0]).lerp(new THREE.Color(S.ground[1]), 0.6)); if (REGO) sr.material = regolithMaterial(THREE, REGO, { w: 9000, d: 9000, color: sr.material.color }); scene.add(sr); }
 // West crater's boulder field: rocks scattered around and inside the crater (sizes up to ~3 m)
 {
-  const n = 1400, geo = new THREE.DodecahedronGeometry(1, 0);
-  const im = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ color: 0x5f5d59, flatShading: true, roughness: 1 }), n);
+  const n = 1400, geo = rockGeometry(THREE, 3);
+  const im = new THREE.InstancedMesh(geo, new THREE.MeshStandardMaterial({ color: 0x6f6c67, flatShading: true, roughness: 0.95, bumpMap: REGO, bumpScale: 0.8 }), n);
   im.castShadow = true; im.receiveShadow = true;
   const mm = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), v = new THREE.Vector3();
   for (let i = 0; i < n; i++) {
