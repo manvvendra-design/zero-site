@@ -13,9 +13,13 @@ export const SITES = {
     intro: 'The first place people ever walked on another world. Neil Armstrong and Buzz Aldrin spent about two and a half hours outside. Everything they left behind is still here.',
     human: true,
     gravity: 1.62, speed: 2.6, jump: 2.3,
-    sun: { az: 0, el: 11 }, earthInSky: { az: 180, el: 66 },
-    ground: [0x8f8c86, 0x6c6a66], rough: 1.6, nCraters: 46,
-    craters: [[40, -6, 12, 2.6]],
+    sun: { az: 90, el: 11 }, earthInSky: { az: 270, el: 66 },
+    ground: [0x8f8c86, 0x6c6a66], rough: 0.25, nCraters: 0,
+    craters: [],
+    // Real ground: NASA LROC NAC elevation model NAC_DTM_APOLLO11, 2 m per sample, cut 1.2 km x 0.8 km
+    // around the lander by tools/prep_dem.py. +x = east, +z = south, heights in metres relative to the lander.
+    dem: { url: 'data/apollo11_dem.bin', w: 601, h: 401, spacing: 2, west: 400, north: 400, min: -35.8187, max: 10.7133,
+      src: 'https://wms.lroc.asu.edu/lroc/view_rdr/NAC_DTM_APOLLO11' },
     spawn: [6, 13], face: [0, 0],
     models: [
       { kind: 'lm', pos: [0, 0], r: 2.4 },
@@ -49,7 +53,7 @@ export const SITES = {
         title: 'The first footprints',
         text: 'There is no wind or rain on the Moon, so the boot prints and tracks around the lander are expected to last for a very long time.',
         src: ALSJ, srcLabel: 'NASA Apollo Lunar Surface Journal' },
-      { id: 'a11-west', at: [27, -6], name: 'Little West crater',
+      { id: 'a11-west', at: [58, -12], name: 'Little West crater',
         title: 'The longest walk of Apollo 11',
         text: 'Near the end of the moonwalk, Armstrong went off alone to the rim of a crater about 60 metres east of Eagle, now called Little West, to photograph inside it. Nobody on Apollo 11 went farther.',
         src: ALSJ, srcLabel: 'NASA Apollo Lunar Surface Journal' },

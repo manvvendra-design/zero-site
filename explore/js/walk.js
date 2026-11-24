@@ -28,7 +28,31 @@ function vnoise(x, y) {
 function fbm(x, y, o = 5) { let s = 0, a = 0.5, f = 1; for (let i = 0; i < o; i++) { s += a * vnoise(x * f, y * f); f *= 2.03; a *= 0.5; } return s; }
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
-const SIZE = 420, HALF = SIZE / 2, LIMIT = 185;
+// Real elevation data (where a site has it): NASA heights on a regular grid, +x east, +z south.
+async function loadDem(d) {
+  try {
+    const r = await fetch(new URL('../' + d.url, import.meta.url));
+    if (!r.ok) throw new Error(r.status);
+    const q = new Uint16Array(await r.arrayBuffer());
+    if (q.length !== d.w * d.h) throw new Error('size');
+    const f = new Float32Array(q.length), k = (d.max - d.min) / 65535;
+    for (let i = 0; i < q.length; i++) f[i] = d.min + q[i] * k;
+    return { ...d, z: f, x0: -d.west, z0: -d.north, x1: -d.west + (d.w - 1) * d.spacing, z1: -d.north + (d.h - 1) * d.spacing };
+  } catch (e) { console.warn('Elevation data not loaded, using generated ground', e); return null; }
+}
+const DEM = S.dem ? await loadDem(S.dem) : null;
+function demH(x, z) {
+  const D = DEM, s = D.spacing;
+  const gx = Math.min(D.w - 1.001, Math.max(0, (x - D.x0) / s)), gz = Math.min(D.h - 1.001, Math.max(0, (z - D.z0) / s));
+  const i = Math.floor(gx), j = Math.floor(gz), fx = gx - i, fz = gz - j, w = D.w, a = D.z;
+  const h00 = a[j * w + i], h10 = a[j * w + i + 1], h01 = a[(j + 1) * w + i], h11 = a[(j + 1) * w + i + 1];
+  return (h00 * (1 - fx) + h10 * fx) * (1 - fz) + (h01 * (1 - fx) + h11 * fx) * fz;
+}
+
+const SIZE = 420, HALF = SIZE / 2;
+// walkable area: a circle on generated ground, the data's box (less a margin) on real ground
+const BOUND = DEM ? { x0: DEM.x0 + 6, x1: DEM.x1 - 6, z0: DEM.z0 + 6, z1: DEM.z1 - 6 } : null;
+const LIMIT = 185;
 const keepClear = [...S.items.map((i) => i.at), ...S.models.filter((m) => m.r).map((m) => m.pos)];
 const craters = [...S.craters];
 for (let k = 0, tries = 0; k < S.nCraters && tries < 2000; tries++) {
@@ -48,6 +72,8 @@ function craterH(x, z) {
   return h;
 }
 function height(x, z) {
+  // real ground + texture finer than the 2 m data can show (small bumps only, no invented craters)
+  if (DEM) return demH(x, z) + S.rough * (vnoise(x * 0.9, z * 0.9) - 0.5) + 0.4 * S.rough * (vnoise(x * 3.1 + 7, z * 3.1) - 0.5);
   const dist = Math.hypot(x, z);
   const flat = smooth(10, 32, dist);
   let h = S.rough * (fbm(x / 26 + 3, z / 26 + 9) - 0.5) * (0.35 + 0.65 * flat);
@@ -127,8 +153,9 @@ if (S.earthInSky) {
 
 // ground mesh
 const SEG = 220;
-const gGeo = new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG);
+const gGeo = DEM ? new THREE.PlaneGeometry(DEM.x1 - DEM.x0, DEM.z1 - DEM.z0, DEM.w - 1, DEM.h - 1) : new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG);
 gGeo.rotateX(-Math.PI / 2);
+if (DEM) gGeo.translate((DEM.x0 + DEM.x1) / 2, 0, (DEM.z0 + DEM.z1) / 2);
 {
   const p = gGeo.attributes.position, col = new Float32Array(p.count * 3);
   const c1 = new THREE.Color(S.ground[0]), c2 = new THREE.Color(S.ground[1]), c = new THREE.Color();
@@ -136,7 +163,7 @@ gGeo.rotateX(-Math.PI / 2);
     const x = p.getX(i), z = p.getZ(i), h = height(x, z);
     p.setY(i, h);
     const n = fbm(x / 9 + 50, z / 9, 3) * 0.7 + vnoise(x * 2.1, z * 2.1) * 0.3;
-    c.copy(c2).lerp(c1, Math.min(1, Math.max(0, n * 1.25 - 0.1 + h * 0.04)));
+    c.copy(c2).lerp(c1, Math.min(1, Math.max(0, n * 1.25 - 0.1 + (DEM ? 0 : h * 0.04))));
     if (S.ocean && h < -1.2) c.set(0xd9cfa6);
     col.set([c.r, c.g, c.b], i * 3);
   }
@@ -192,7 +219,9 @@ for (const md of S.models) {
       pts.push([Math.cos(a) * r, Math.sin(a) * r, hash(i, 8.8) * 6]);
     }
     // Armstrong's walk to Little West
-    for (let i = 0; i < 46; i++) pts.push([4 + i * 0.52, (i % 2 ? 0.25 : -0.25) - 3 + i * -0.06, Math.PI / 2]);
+    const [wx, wz] = (S.items.find((i) => i.id === 'a11-west') || { at: [27, -6] }).at;
+    const steps = Math.round(Math.hypot(wx - 4, wz + 3) / 0.52), ang = Math.atan2(wx - 4, wz + 3);
+    for (let i = 0; i < steps; i++) { const t = i / steps; pts.push([4 + (wx - 4) * t + (i % 2 ? 0.25 : -0.25) * Math.cos(ang), -3 + (wz + 3) * t - (i % 2 ? 0.25 : -0.25) * Math.sin(ang), ang]); }
     decals(pts, 0.16, 0.32, groundDark, 0.55);
   }
   if (md.kind === 'tracks') {
@@ -447,8 +476,12 @@ function step(now) {
     const dx = P.pos.x - c.x, dz = P.pos.z - c.z, l = Math.hypot(dx, dz), min = c.r + 0.4;
     if (l < min && l > 0.0001) { P.pos.x = c.x + (dx / l) * min; P.pos.z = c.z + (dz / l) * min; }
   }
-  const rr = Math.hypot(P.pos.x, P.pos.z);
-  if (rr > LIMIT) { P.pos.x *= LIMIT / rr; P.pos.z *= LIMIT / rr; }
+  if (BOUND) {
+    P.pos.x = Math.min(BOUND.x1, Math.max(BOUND.x0, P.pos.x)); P.pos.z = Math.min(BOUND.z1, Math.max(BOUND.z0, P.pos.z));
+  } else {
+    const rr = Math.hypot(P.pos.x, P.pos.z);
+    if (rr > LIMIT) { P.pos.x *= LIMIT / rr; P.pos.z *= LIMIT / rr; }
+  }
   if (S.ocean && P.pos.x > 118) P.pos.x = 118;
 
   // gravity and jumping
@@ -536,4 +569,4 @@ function resize() {
 addEventListener('resize', resize);
 resize();
 requestAnimationFrame(step);
-window.__walk = { P, cam, items, inspect, S };
+window.__walk = { P, cam, items, inspect, S, height, dem: () => DEM && demH };
