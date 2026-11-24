@@ -262,8 +262,11 @@ addEventListener('blur', () => keys.clear());
 const joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 };
 const look = { id: null, x: 0, y: 0 };
 const joyEl = $('joy'), knob = $('joyKnob');
+const tap = new Map();
 canvas.addEventListener('pointerdown', (e) => {
   const touch = e.pointerType === 'touch';
+  tap.set(e.pointerId, { x: e.clientX, y: e.clientY, t: performance.now() });
+  canvas.focus({ preventScroll: true });
   if (touch && e.clientX < innerWidth * 0.45 && joy.id === null) {
     Object.assign(joy, { id: e.pointerId, ox: e.clientX, oy: e.clientY, x: 0, y: 0 });
     joyEl.style.transform = `translate(${e.clientX - 60}px, ${e.clientY - 60}px)`; joyEl.classList.add('on');
@@ -282,11 +285,34 @@ canvas.addEventListener('pointermove', (e) => {
   }
 });
 const endPtr = (e) => {
+  const tp = tap.get(e.pointerId); tap.delete(e.pointerId);
+  if (e.type === 'pointerup' && tp && Math.hypot(e.clientX - tp.x, e.clientY - tp.y) < 10 && performance.now() - tp.t < 450) walkTo(e.clientX, e.clientY);
   if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; joyEl.classList.remove('on'); }
   if (e.pointerId === look.id) look.id = null;
 };
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
 canvas.addEventListener('wheel', (e) => { cam.dist = Math.min(14, Math.max(3, cam.dist * (1 + e.deltaY * 0.001))); e.preventDefault(); }, { passive: false });
+// tap or click the ground (or a marker) to walk there
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+const goalRing = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.5, 32), new THREE.MeshBasicMaterial({ color: 0xFF2D46, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide }));
+goalRing.rotation.x = -Math.PI / 2; goalRing.visible = false; scene.add(goalRing);
+function walkTo(cx, cy) {
+  if (!started) return;
+  const r = canvas.getBoundingClientRect();
+  ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hitM = ray.intersectObjects(items.map((i) => i.m))[0];
+  if (hitM) { const it = items.find((i) => i.m === hitM.object); P.goal = { x: it.at[0], z: it.at[1], item: it }; }
+  else {
+    const hit = ray.intersectObject(ground)[0];
+    if (!hit) return;
+    // snap to an item if the tap landed near one
+    const it = items.find((i) => Math.hypot(i.at[0] - hit.point.x, i.at[1] - hit.point.z) < 2.2);
+    P.goal = it ? { x: it.at[0], z: it.at[1], item: it } : { x: hit.point.x, z: hit.point.z, item: null };
+  }
+  goalRing.position.set(P.goal.x, height(P.goal.x, P.goal.z) + 0.08, P.goal.z);
+  goalRing.visible = true;
+}
 $('jumpBtn').addEventListener('click', () => { input.jump = true; });
 $('inspectBtn').addEventListener('click', () => inspectNear());
 if (matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch');
@@ -360,7 +386,11 @@ $('introMeta').textContent = `${fmtDate(S.date)} · ${S.mission} · ${S.who}`;
 $('introText').textContent = S.intro;
 $('introWhere').textContent = S.where;
 const startBtn = $('startBtn');
-startBtn.addEventListener('click', () => { $('intro').classList.add('gone'); started = true; });
+startBtn.addEventListener('click', () => {
+  $('intro').classList.add('gone'); started = true;
+  canvas.focus({ preventScroll: true });
+  toast(matchMedia('(pointer: coarse)').matches ? 'Tap the ground to walk there, or drag on the left to steer' : 'Click the ground to walk there, or use W A S D / arrow keys', '→');
+});
 let started = false;
 
 // ---------- loop ----------
@@ -388,6 +418,16 @@ function step(now) {
   let mag = Math.hypot(mx, mz);
   if (mag > 1) { mx /= mag; mz /= mag; mag = 1; }
   if (!started) mag = 0;
+  let goalDir = null;
+  if (mag > 0.05) { P.goal = null; goalRing.visible = false; }
+  else if (P.goal && started) {
+    const gx = P.goal.x - P.pos.x, gz = P.goal.z - P.pos.z, gd = Math.hypot(gx, gz);
+    const stopAt = P.goal.item ? 1.4 : 0.35;
+    if (gd < stopAt || (P.goal.t = (P.goal.t || 0) + dt) > 15) {
+      if (P.goal.item && gd < 2.6) inspect(P.goal.item);
+      P.goal = null; goalRing.visible = false;
+    } else { goalDir = Math.atan2(gx, gz); mag = Math.min(1, gd / 1.5 + 0.3); run = gd > 14; }
+  }
 
   // camera-relative direction
   fwd.set(-Math.sin(cam.yaw), 0, -Math.cos(cam.yaw));
@@ -396,7 +436,7 @@ function step(now) {
   P.speed += (target - P.speed) * Math.min(1, dt * (P.onGround ? 8 : 1.5));
   if (mag > 0.05) {
     tmp.copy(fwd).multiplyScalar(-mz).addScaledVector(right, mx).normalize();
-    const want = Math.atan2(tmp.x, tmp.z);
+    const want = goalDir !== null ? goalDir : Math.atan2(tmp.x, tmp.z);
     let d = want - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
     P.yaw += d * Math.min(1, dt * 10);
   }

@@ -41,3 +41,4 @@ body.touch .prompt { bottom: 112px; }
   .guide { top: 58px; font-size: 12px; }
   .walk .panel { bottom: 0; }
 }
+#scene:focus { outline: none; }
