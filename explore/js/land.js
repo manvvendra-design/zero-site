@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { SITES } from './sites.js';
 import { makeModel } from './models.js';
+import { recordLanding } from './mission.js';
 import { loadDem, demH, makeSurround } from './terrain.js';
 
 const S = SITES.apollo11;
@@ -331,6 +332,8 @@ function land() {
     </tbody></table>
     <p class="fine">Soft landing in this game: under ${RULE.softDown} ft/s down and ${RULE.softSide} ft/s sideways. Over ${RULE.maxDown} ft/s breaks the gear, about the speed of a free fall from 10 ft in lunar gravity. Fuel: ${toBingo > 0 ? `${Math.round(toBingo)} s before the Bingo call` : 'past Bingo'}.</p>
     <p class="fine">Real figures: <a href="${SRC}" target="_blank" rel="noopener">NASA Apollo Lunar Surface Journal, Apollo 11 landing</a>, quoting the Apollo 11 Mission Report.</p>`;
+  const pr = recordLanding({ cls, verdict, down, fuel: L.fuel, fromReal }, REAL);
+  $('resultsBody').insertAdjacentHTML('beforeend', `<div class="pts"><b>+${pr.pts}</b> mission points${pr.isBest && pr.pts > 0 ? ' · new best' : ` · best ${pr.best}`}<small>Up to 100: a safe, soft landing, softer than Armstrong, more fuel left than him, and close to the real spot.</small></div>`);
   $('results').hidden = false;
   try {
     if (cls !== 'bad') { const k = 'zu-walk-found', f = new Set(JSON.parse(localStorage.getItem(k) || '[]')); f.add('a11-landed'); localStorage.setItem(k, JSON.stringify([...f])); }

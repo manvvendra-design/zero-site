@@ -5,6 +5,9 @@
 
 const NSSDCA = (id) => `https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=${id}`;
 const ALSJ = 'https://www.hq.nasa.gov/alsj/a11/a11.html';
+// specific Apollo Lunar Surface Journal pages (the old hq.nasa.gov paths now land on a general index)
+export const ALSJ11 = (page) => `https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/${page}`;
+export const LROC_FLAGS = 'https://www.lroc.asu.edu/images/537';
 
 export const SITES = {
   apollo11: {
@@ -23,9 +26,11 @@ export const SITES = {
     spawn: [6, 13], face: [0, 0],
     models: [
       { kind: 'lm', pos: [0, 0], r: 2.4 },
-      { kind: 'flag', pos: [6.5, -4.5] },
-      { kind: 'lrrr', pos: [-6, 8], r: 0.6 },
-      { kind: 'psep', pos: [-9.5, 2], r: 0.9 },
+      // real layout from the ALSJ photogrammetry study: flag 10.7 m from the LM centre and 7.8 m from the
+      // north (+Y) footpad; laser reflector 18 m and seismometer about 24 m from the south (-Y) footpad
+      { kind: 'flag', pos: [-7, -8] },
+      { kind: 'lrrr', pos: [-3, 22.5], r: 0.6 },
+      { kind: 'psep', pos: [-8, 27.8], r: 0.9 },
       { kind: 'prints', pos: [0, 0] },
     ],
     items: [
@@ -35,28 +40,28 @@ export const SITES = {
         src: NSSDCA('1969-059C'), srcLabel: 'NASA NSSDCA record: Apollo 11 lunar module' },
       { id: 'a11-plaque', at: [1.2, 3.6], name: 'The plaque',
         title: 'A message on the ladder leg',
-        text: 'A steel plaque on the leg with the ladder is signed by the three astronauts. It ends with the words “We came in peace for all mankind.”',
-        src: ALSJ, srcLabel: 'NASA Apollo Lunar Surface Journal' },
-      { id: 'a11-lrrr', at: [-6, 9.6], name: 'Laser reflector',
+        text: 'A steel plaque on the leg with the ladder shows both halves of the Earth and is signed by the three astronauts and the President. It ends with the words “We came in peace for all mankind.”',
+        src: ALSJ11('a11.step.html'), srcLabel: 'NASA Apollo Lunar Surface Journal: First Steps' },
+      { id: 'a11-lrrr', at: [-3, 24.1], name: 'Laser reflector',
         title: 'A mirror that still works',
         text: 'This panel holds 100 glass corner-cube prisms. Observatories on Earth still fire lasers at it and time the echo, measuring the distance to the Moon to within centimetres. That is how we know the Moon moves about 3.8 cm farther from Earth every year.',
         src: NSSDCA('1969-059C'), srcLabel: 'NASA NSSDCA record: Apollo 11 lunar module' },
-      { id: 'a11-psep', at: [-9.5, 3.8], name: 'Moonquake detector',
+      { id: 'a11-psep', at: [-8, 29.6], name: 'Moonquake detector',
         title: 'Listening for moonquakes',
-        text: 'The Passive Seismic Experiment was a solar-powered seismometer. It felt moonquakes, meteorite hits and even the astronauts’ footsteps, and sent data home for about three weeks.',
-        src: ALSJ, srcLabel: 'NASA Apollo Lunar Surface Journal' },
-      { id: 'a11-flag', at: [6.5, -3.2], name: 'Fallen flag',
+        text: 'The Passive Seismic Experiment was a seismometer powered by two solar panels. Armstrong and Aldrin carried it and the laser reflector about 20 metres south of Eagle. It felt moonquakes, meteorite hits and even the astronauts’ footsteps.',
+        src: ALSJ11('a11.clsout.html'), srcLabel: 'NASA Apollo Lunar Surface Journal: EASEP deployment' },
+      { id: 'a11-flag', at: [-7, -6.6], name: 'Fallen flag',
         title: 'Blown over at lift-off',
-        text: 'The flag was planted close to the lander. Aldrin saw it knocked flat by the engine blast when Eagle’s top half took off, so it has lain on the ground ever since.',
-        src: ALSJ, srcLabel: 'NASA Apollo Lunar Surface Journal' },
+        text: 'The flag stood about 11 metres from the centre of the lander. Aldrin said the engine exhaust blew it over when Eagle’s top half took off. In 2012, NASA’s Lunar Reconnaissance Orbiter photographed the shadows of the flags at Apollo 12, 16 and 17, but found none at Apollo 11.',
+        src: LROC_FLAGS, srcLabel: 'NASA LROC: Apollo flags still standing' },
       { id: 'a11-prints', at: [3.4, -2.6], name: 'Boot prints',
         title: 'The first footprints',
-        text: 'There is no wind or rain on the Moon, so the boot prints and tracks around the lander are expected to last for a very long time.',
-        src: ALSJ, srcLabel: 'NASA Apollo Lunar Surface Journal' },
+        text: 'Armstrong’s boot sank a couple of inches into the fine soil and left a sharp print. With gravity only one-sixth as strong as Earth’s, his total weight, suit and backpack included, was only about 60 pounds (27 kg). With no wind or rain here, the prints are expected to last a very long time.',
+        src: ALSJ11('a11.summary.html'), srcLabel: 'NASA Apollo Lunar Surface Journal: Summary' },
       { id: 'a11-west', at: [58, -12], name: 'Little West crater',
         title: 'The longest walk of Apollo 11',
-        text: 'Near the end of the moonwalk, Armstrong went off alone to the rim of a crater about 60 metres east of Eagle, now called Little West, to photograph inside it. Nobody on Apollo 11 went farther.',
-        src: ALSJ, srcLabel: 'NASA Apollo Lunar Surface Journal' },
+        text: 'Near the end of the moonwalk, Armstrong ran off alone to the rim of a crater about 60 metres east of Eagle, now called Little West, to photograph inside it. The trip out and back covered about 120 metres in just over three minutes. Nobody on Apollo 11 went farther.',
+        src: ALSJ11('a11.clsout.html'), srcLabel: 'NASA Apollo Lunar Surface Journal: Closeout' },
     ],
   },
 

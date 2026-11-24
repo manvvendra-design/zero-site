@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { SITES, SITE_ORDER } from './sites.js';
 import { makeAstronaut, makeModel } from './models.js';
 import { loadDem, demH as demHeight, makeSurround } from './terrain.js';
+import * as M from './mission.js';
 
 const params = new URLSearchParams(location.search);
 const siteId = SITES[params.get('site')] ? params.get('site') : 'apollo11';
@@ -385,7 +386,8 @@ function inspect(it) {
     <p>${esc(it.text)}</p>
     <a class="src" href="${esc(it.src)}" target="_blank" rel="noopener">Source: ${esc(it.srcLabel)} ↗</a>
     <h3>${esc(S.name)} · ${n} of ${items.length} found</h3>
-    <div class="bar"><i style="width:${(100 * n) / items.length}%"></i></div>`);
+    <div class="bar"><i style="width:${(100 * n) / items.length}%"></i></div>${MISSION ? missionHook(it, isNew) : ''}`);
+  if (MISSION) refreshPts();
   if (isNew && n === items.length) setTimeout(() => toast(`You found everything at ${S.name}`, '★'), 600);
 }
 let nearItem = null;
@@ -404,11 +406,89 @@ function openSites() {
 }
 $('sitesBtn').addEventListener('click', openSites);
 
+// ---------- Mission 1 (Apollo 11): points, field notes, questions, patch ----------
+const MISSION = siteId === 'apollo11';
+const ptsBtn = $('ptsBtn');
+function refreshPts() { if (!MISSION) return; const sc = M.score(items, found); ptsBtn.innerHTML = `<b>${sc.total}</b><span class="fw"> pts</span>`; }
+function missionHook(it, isNew) {
+  const q = M.QUESTIONS.find((x) => x.needs === it.id); const st = M.load();
+  const pts = isNew ? `<p class="fine">+${M.PTS.find} points for finding it. Field note saved to your mission log.</p>` : '';
+  if (!q) return pts;
+  const r = st.q[q.id];
+  return pts + (r && r.ok ? `<button class="btn small" data-mission="log">Mission log</button>`
+    : `<button class="btn small primary" data-q="${q.id}">Answer a question about this · +${M.PTS.qFirst}</button>`);
+}
+function openMission() {
+  const st = M.load(), sc = M.score(items, found, st);
+  const qRow = (q, i) => {
+    const r = st.q[q.id], open = found.has(q.needs), it = items.find((x) => x.id === q.needs);
+    const state = r && r.ok ? `<span class="n ok">+${r.tries === 1 ? M.PTS.qFirst : M.PTS.qLater}</span>` : open ? '<span class="n">Answer</span>' : '<span class="n">Locked</span>';
+    return `<li><button class="qrow ${open ? '' : 'locked'}" ${open ? `data-q="${q.id}"` : 'disabled'}><span class="y">Q${i + 1}</span><span class="t">${esc(q.q)}${open ? '' : `<small>Find the ${esc(it ? it.name.toLowerCase() : 'object')} to unlock</small>`}</span>${state}</button></li>`;
+  };
+  const notes = items.filter((i) => found.has(i.id));
+  openPanel(`
+    <div class="meta"><span class="pill">Mission 1</span><span>Apollo 11</span></div>
+    <h2>Mission log</h2>
+    <div class="score"><b>${sc.total}</b><span>of ${sc.max} points</span></div>
+    <table class="tally"><tbody>
+      <tr><th>Things found</th><td>${sc.finds} of ${items.length}</td><td>${sc.findPts}</td></tr>
+      <tr><th>Land the Eagle (best)</th><td>${st.land ? esc(st.land.verdict) : 'Not flown yet'}</td><td>${sc.land}</td></tr>
+      <tr><th>Questions</th><td>${sc.answered} of ${M.QUESTIONS.length}</td><td>${sc.qPts}</td></tr>
+    </tbody></table>
+    <div class="patch-box">${M.patchSVG(sc.patch, 150)}<p>${sc.patch ? '<b>Patch earned.</b> Our own design for Mission 1, drawn in code.' : `Answer all ${M.QUESTIONS.length} questions to earn the Apollo 11 patch.`}</p></div>
+    <a class="btn small" href="land.html">${st.land ? 'Fly Land the Eagle again' : 'Fly Land the Eagle · up to 100'}</a>
+    <h3>Questions</h3>
+    <ul class="list">${M.QUESTIONS.map(qRow).join('')}</ul>
+    <h3>Field notes</h3>
+    ${notes.length ? `<ul class="notes">${notes.map((i) => `<li><b>${esc(i.title)}</b>${esc(i.text)} <a href="${esc(i.src)}" target="_blank" rel="noopener">Source ↗</a></li>`).join('')}</ul>` : '<p class="fine">Walk up to the red markers and inspect them to fill your notebook.</p>'}
+    <p class="fine">Progress is saved in this browser. <button class="linkbtn" data-mission="reset">Start the mission over</button></p>`);
+}
+function openQuestion(qid) {
+  const q = M.QUESTIONS.find((x) => x.id === qid); if (!q) return;
+  const st = M.load(), r = st.q[q.id];
+  // shuffle the options, but the same way every time for a given question
+  const order = q.a.map((_, i) => i).sort((a, b) => ((a * 7 + q.id.length * 3) % 5) - ((b * 7 + q.id.length * 3) % 5));
+  openPanel(`
+    <div class="meta"><span class="pill">Question ${M.QUESTIONS.indexOf(q) + 1} of ${M.QUESTIONS.length}</span></div>
+    <h2 class="q">${esc(q.q)}</h2>
+    <ul class="answers">${order.map((i) => `<li><button data-a="${i}" ${r && r.ok ? 'disabled' : ''} class="${r && r.ok && i === 0 ? 'right' : ''}">${esc(q.a[i])}</button></li>`).join('')}</ul>
+    <div id="qResult">${r && r.ok ? qExplain(q, r) : `<p class="fine">${r && r.tries ? 'Not quite. Try again for ' + M.PTS.qLater + ' points.' : `${M.PTS.qFirst} points first try, ${M.PTS.qLater} after that.`}</p>`}</div>`);
+  panelBody.querySelectorAll('[data-a]').forEach((b) => b.addEventListener('click', () => {
+    const ok = b.dataset.a === '0'; const res = M.answer(M.load(), q.id, ok);
+    if (ok) {
+      panelBody.querySelectorAll('[data-a]').forEach((x) => { x.disabled = true; });
+      b.classList.add('right'); $('qResult').innerHTML = qExplain(q, res); refreshPts();
+      const sc = M.score(items, found);
+      toast(`+${res.tries === 1 ? M.PTS.qFirst : M.PTS.qLater} points`, '✓');
+      if (sc.patch && sc.answered === M.QUESTIONS.length && res.tries) setTimeout(() => { toast('You earned the Apollo 11 patch', '★'); }, 900);
+    } else { b.classList.add('wrong'); b.disabled = true; $('qResult').innerHTML = `<p class="fine">Not quite. Try again for ${M.PTS.qLater} points.</p>`; }
+  }));
+}
+function qExplain(q, r) {
+  return `<p><b class="ok">Right${r.tries === 1 ? ', first try' : ''}.</b> ${esc(q.why)}</p>
+    <a class="src" href="${esc(q.src)}" target="_blank" rel="noopener">Source: ${esc(q.srcLabel)} ↗</a>
+    <p><button class="btn small" data-mission="log">Mission log</button></p>`;
+}
+if (MISSION) {
+  ptsBtn.hidden = false; refreshPts();
+  ptsBtn.addEventListener('click', openMission);
+  panelBody.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-q],[data-mission]'); if (!t) return;
+    if (t.dataset.q) openQuestion(t.dataset.q);
+    else if (t.dataset.mission === 'log') openMission();
+    else if (t.dataset.mission === 'reset' && confirm('Clear your Apollo 11 points, answers and finds in this browser?')) {
+      try { localStorage.removeItem('zu-a11-mission'); } catch (e2) { /* ignore */ }
+      items.forEach((i) => { found.delete(i.id); i.m.material = markerMat; i.ring.material.color.set(0xFF2D46); }); found.delete('a11-landed'); saveFound(); refreshCount(); refreshPts(); openMission();
+    }
+  });
+}
+
 // intro
 $('introTitle').textContent = S.name;
 $('introMeta').textContent = `${fmtDate(S.date)} · ${S.mission} · ${S.who}`;
 $('introText').textContent = S.intro;
 $('introWhere').textContent = S.where;
+if (S.dem) $('introFine').textContent = 'Walk up to a red marker and inspect it. The ground is NASA’s real elevation map and the equipment stands where it really stands, so some things are a short walk away. Works with a PS5 or other game controller.';
 const startBtn = $('startBtn');
 startBtn.addEventListener('click', () => {
   $('intro').classList.add('gone'); started = true;
@@ -567,4 +647,4 @@ addEventListener('resize', resize);
 resize();
 requestAnimationFrame(step);
 if (siteId === 'apollo11') $('landBtn').hidden = false;
-window.__walk = { P, cam, items, inspect, S, height, dem: () => DEM && demH };
+window.__walk = { openMission: () => openMission(), openQuestion: (q) => openQuestion(q), M, found, P, cam, items, inspect, S, height, dem: () => DEM && demH };

@@ -31,3 +31,6 @@
   .land .alert { top: auto; bottom: 120px; font-size: 15px; }
   .land .rod-btns { bottom: 12px; right: 8px; }
 }
+.pts { margin: 14px 0 4px; padding: 12px 14px; border: 1px solid rgba(255, 45, 70, .5); border-radius: 10px; font-size: 14px; }
+.pts b { font: 900 26px/1 'Barlow Condensed', sans-serif; color: #FF2D46; margin-right: 6px; }
+.pts small { display: block; color: rgba(244, 241, 234, .6); margin-top: 6px; font-size: 12px; line-height: 1.4; }
