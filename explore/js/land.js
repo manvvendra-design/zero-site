@@ -214,7 +214,7 @@ const lookBy = (dx, dy) => {
 const zoomBy = (f) => { cam.dist = Math.min(600, Math.max(7, cam.dist * f)); };
 function clampCam() {
   cam.pitch = Math.min(1.55, Math.max(-0.35, cam.pitch));
-  cam.wYaw = Math.max(-2.6, Math.min(2.6, cam.wYaw)); cam.wPitch = Math.max(-0.9, Math.min(0.9, cam.wPitch));
+  cam.wYaw = Math.atan2(Math.sin(cam.wYaw), Math.cos(cam.wYaw)); cam.wPitch = Math.max(-1.0, Math.min(1.5, cam.wPitch)); // full turn of the head, up to the sky
 }
 function resetCam() { Object.assign(cam, CAM0, { wYaw: 0, wPitch: 0 }); }
 const pinchDist = () => { const p = [...looks.values()]; return p.length < 2 ? 0 : Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); };
@@ -228,7 +228,7 @@ canvas.addEventListener('pointerdown', (e) => {
     looks.set(e.pointerId, { x: e.clientX, y: e.clientY });
     pinch0 = pinchDist();
   }
-  canvas.setPointerCapture(e.pointerId);
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* pointer already gone */ }
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === joy.id) {

@@ -76,3 +76,5 @@ b.ok { color: #4cc38a; }
 .notes li b { display: block; color: var(--ivory); font-size: 14px; margin-bottom: 2px; }
 .notes a { color: var(--rose); }
 .linkbtn { background: none; border: 0; padding: 0; color: var(--rose); text-decoration: underline; font: inherit; cursor: pointer; }
+
+.chip.view-chip.on { background: var(--red); border-color: var(--red); }

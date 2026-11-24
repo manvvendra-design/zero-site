@@ -55,10 +55,10 @@ export function makeAstronaut() {
   body.add(box(0.52, 0.1, 0.27, M.grey, 0, 1.71, -0.33));
   body.add(box(0.34, 0.18, 0.12, M.grey, 0, 1.3, 0.27));        // chest control unit
   body.add(box(0.06, 0.06, 0.04, M.red, 0.1, 1.33, 0.34));
-  const helmet = mesh(new THREE.SphereGeometry(0.25, 24, 16), M.suit, 0, 1.8, 0.02);
-  body.add(helmet);
-  const visor = mesh(new THREE.SphereGeometry(0.258, 24, 16, Math.PI / 2 - 0.95, 1.9, 0.7, 1.05), M.visor, 0, 1.8, 0.02);
-  body.add(visor);
+  // the head turns on its own (pivot at the neck ring) so the astronaut can look around
+  const head = new THREE.Group(); head.position.set(0, 1.62, 0.02); body.add(head);
+  head.add(mesh(new THREE.SphereGeometry(0.25, 24, 16), M.suit, 0, 0.18, 0));
+  head.add(mesh(new THREE.SphereGeometry(0.258, 24, 16, Math.PI / 2 - 0.95, 1.9, 0.7, 1.05), M.visor, 0, 0.18, 0));
   body.add(cyl(0.2, 0.22, 0.08, M.grey, 0, 1.6, 0.02, 20));     // neck ring
 
   const armL = limb(0.62, 0.105, M.suit, box(0.13, 0.15, 0.13, M.grey));
@@ -72,7 +72,7 @@ export function makeAstronaut() {
   legL.position.set(0.16, 0.98, 0); legR.position.set(-0.16, 0.98, 0);
   bootL.position.y = bootR.position.y = -0.86 + 0.06;
   body.add(armL, armR, legL, legR);
-  g.userData = { body, armL, armR, legL, legR };
+  g.userData = { body, head, armL, armR, legL, legR };
   return g;
 }
 

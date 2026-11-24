@@ -294,6 +294,7 @@ addEventListener('keydown', (e) => {
   if (e.code === 'Space') { input.jump = true; e.preventDefault(); }
   if (e.code === 'KeyE' || e.code === 'Enter') inspectNear();
   if (e.code === 'Escape') closePanel();
+  if (e.code === 'KeyV') setFP(!cam.fp);
   if (e.code.startsWith('Arrow')) e.preventDefault();
 });
 addEventListener('keyup', (e) => keys.delete(e.code));
@@ -318,7 +319,7 @@ canvas.addEventListener('pointerdown', (e) => {
     if (look.id === null) Object.assign(look, { id: e.pointerId, x: e.clientX, y: e.clientY });
     if (touch) { pinch.set(e.pointerId, { x: e.clientX, y: e.clientY }); pinch0 = pinchDist(); }
   }
-  canvas.setPointerCapture(e.pointerId);
+  try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* pointer already gone */ }
 });
 canvas.addEventListener('pointermove', (e) => {
   if (e.pointerId === joy.id) {
@@ -328,22 +329,38 @@ canvas.addEventListener('pointermove', (e) => {
   }
   const pp = pinch.get(e.pointerId);
   if (pp) { pp.x = e.clientX; pp.y = e.clientY; if (pinch.size >= 2) { const d = pinchDist(); if (pinch0 > 0 && d > 0) zoomBy(pinch0 / d); pinch0 = d; look.x = e.clientX; look.y = e.clientY; return; } }
+  if (locked()) { cam.yaw -= e.movementX * 0.0025; cam.pitch += e.movementY * 0.0025 * (cam.fp ? -1 : 1); return; }
   if (e.pointerId === look.id) {
     const k = e.pointerType === 'touch' ? 0.006 : 0.0045;
-    cam.yaw -= (e.clientX - look.x) * k; cam.pitch += (e.clientY - look.y) * k;
+    // helmet view: drag the view itself (like turning your head); outside: drag the world around the astronaut
+    cam.yaw -= (e.clientX - look.x) * k * (cam.fp ? -0.8 : 1); cam.pitch += (e.clientY - look.y) * k * (cam.fp ? -0.8 : 1);
     look.x = e.clientX; look.y = e.clientY;
   }
 });
 const endPtr = (e) => {
   const tp = tap.get(e.pointerId); tap.delete(e.pointerId);
-  if (e.type === 'pointerup' && tp && Math.hypot(e.clientX - tp.x, e.clientY - tp.y) < 10 && performance.now() - tp.t < 450) walkTo(e.clientX, e.clientY);
+  if (e.type === 'pointerup' && tp && !locked() && Math.hypot(e.clientX - tp.x, e.clientY - tp.y) < 10 && performance.now() - tp.t < 450) walkTo(e.clientX, e.clientY);
   if (e.pointerId === joy.id) { joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; joyEl.classList.remove('on'); }
   if (e.pointerId === look.id) look.id = null;
   if (pinch.delete(e.pointerId)) { pinch0 = pinchDist(); if (look.id === null && pinch.size) { const [id, q] = [...pinch.entries()][0]; Object.assign(look, { id, x: q.x, y: q.y }); } }
 };
 canvas.addEventListener('pointerup', endPtr); canvas.addEventListener('pointercancel', endPtr);
 canvas.addEventListener('wheel', (e) => { zoomBy(1 + Math.max(-0.3, Math.min(0.3, e.deltaY * 0.001))); e.preventDefault(); }, { passive: false });
-canvas.addEventListener('dblclick', () => { cam.yaw = P.yaw + Math.PI; cam.pitch = 0.32; cam.dist = 6.5; });
+canvas.addEventListener('dblclick', () => { cam.yaw = P.yaw + Math.PI; cam.pitch = cam.fp ? 0 : 0.32; cam.dist = 6.5; });
+// helmet view (first person): full 360 degrees around, straight up at the sky and straight down at your boots
+const locked = () => document.pointerLockElement === canvas;
+function setFP(on) {
+  cam.fp = on; cam.pitch = on ? 0 : 0.32;
+  if (on) cam.yaw = P.yaw + Math.PI;
+  $('fpBtn').classList.toggle('on', on); $('fpBtn').textContent = on ? 'Outside view' : 'Helmet view';
+  if (!on && locked()) document.exitPointerLock();
+  toast(on ? (matchMedia('(pointer: coarse)').matches ? 'Helmet view: drag to look all around' : 'Helmet view: click the scene to look with the mouse, Esc to free it, V to switch back') : 'Outside view');
+}
+$('fpBtn').addEventListener('click', () => setFP(!cam.fp));
+canvas.addEventListener('click', () => {
+  if (!cam.fp || locked() || matchMedia('(pointer: coarse)').matches) return;
+  try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) { /* embedded preview may not allow it: drag still works */ }
+});
 // tap or click the ground (or a marker) to walk there
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 const goalRing = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.5, 32), new THREE.MeshBasicMaterial({ color: 0xFF2D46, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide }));
@@ -547,7 +564,7 @@ function step(now) {
   }
   if (keys.has('Equal') || keys.has('NumpadAdd')) zoomBy(1 - 1.2 * dt);
   if (keys.has('Minus') || keys.has('NumpadSubtract')) zoomBy(1 + 1.2 * dt);
-  cam.pitch = Math.min(1.5, Math.max(-0.45, cam.pitch));
+  cam.pitch = cam.fp ? Math.min(1.5, Math.max(-1.5, cam.pitch)) : Math.min(1.5, Math.max(-1.25, cam.pitch));
   let mag = Math.hypot(mx, mz);
   if (mag > 1) { mx /= mag; mz /= mag; mag = 1; }
   if (!started) mag = 0;
@@ -613,14 +630,30 @@ function step(now) {
   u.body.rotation.x = moving ? Math.min(0.2, P.speed * 0.03) : 0;
   astro.position.copy(P.pos);
   astro.rotation.y = P.yaw;
+  // the astronaut's head follows where you are looking (up to ~100 degrees each side; past that it turns its body when standing)
+  let rel = (cam.yaw + Math.PI) - P.yaw; rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+  if (!moving && !cam.fp && Math.abs(rel) > 1.75 && started) { P.yaw += Math.sign(rel) * Math.min(Math.abs(rel) - 1.75, dt * 2.5); }
+  const hy = Math.abs(rel) < 1.75 ? Math.max(-1.1, Math.min(1.1, rel)) : 0;
+  u.head.rotation.y += (hy - u.head.rotation.y) * Math.min(1, dt * 6);
+  u.head.rotation.x += ((cam.fp ? -cam.pitch : -cam.pitch * 0.5) * 0.5 - u.head.rotation.x) * Math.min(1, dt * 6);
+  astro.visible = !cam.fp;
 
   // camera
   camTarget.set(P.pos.x, P.pos.y + 1.5, P.pos.z);
-  const cp = Math.cos(cam.pitch);
-  camera.position.set(camTarget.x + Math.sin(cam.yaw) * cp * cam.dist, camTarget.y + Math.sin(cam.pitch) * cam.dist, camTarget.z + Math.cos(cam.yaw) * cp * cam.dist);
-  const ch = height(camera.position.x, camera.position.z) + 0.5;
-  if (camera.position.y < ch) camera.position.y = ch;
-  camera.lookAt(camTarget);
+  if (cam.fp) {
+    // inside the helmet: eye height 1.62 m (bobs with the walk), look in any direction
+    camera.position.set(P.pos.x, P.pos.y + 1.62 + u.body.position.y, P.pos.z);
+    const cp = Math.cos(cam.pitch);
+    camera.lookAt(camera.position.x - Math.sin(cam.yaw) * cp, camera.position.y + Math.sin(cam.pitch), camera.position.z - Math.cos(cam.yaw) * cp);
+  } else {
+    const cp = Math.cos(cam.pitch);
+    camera.position.set(camTarget.x + Math.sin(cam.yaw) * cp * cam.dist, camTarget.y + Math.sin(cam.pitch) * cam.dist, camTarget.z + Math.cos(cam.yaw) * cp * cam.dist);
+    const ch = height(camera.position.x, camera.position.z) + 0.5;
+    // camera pushed below the ground: stay above it and tilt up instead, so you can look up at the sky and the Earth
+    const lift = Math.max(0, ch - camera.position.y);
+    if (lift > 0) camera.position.y = ch;
+    camera.lookAt(camTarget.x, camTarget.y + lift * 1.6, camTarget.z);
+  }
 
   // light follows the player
   sun.position.copy(P.pos).addScaledVector(sunDir, 120);
