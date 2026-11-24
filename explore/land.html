@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Land the Eagle · Zero Universe</title>
+<meta name="description" content="Fly the last two minutes of the Apollo 11 landing over NASA's real elevation map of Tranquility Base, with the real callouts and fuel.">
+<meta name="theme-color" content="#0D0E11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="explore.css">
+<link rel="stylesheet" href="walk.css">
+<link rel="stylesheet" href="land.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body class="walk land">
+<div id="app">
+  <canvas id="scene" tabindex="0" aria-label="The lunar module descending to Tranquility Base"></canvas>
+
+  <header class="top">
+    <a class="mark" href="walk.html?site=apollo11" aria-label="Back to Tranquility Base">
+      <span class="back">←</span><span class="mark-dot"></span><span class="mark-word">Land the Eagle</span>
+    </a>
+    <div class="top-right"><button class="chip" id="viewBtn">Window view</button></div>
+  </header>
+
+  <div class="hud" aria-live="off">
+    <div><b id="hAlt">460</b><span>ALT ft</span><i id="hAltM"></i></div>
+    <div><b id="hDown">11</b><span>DOWN ft/s</span></div>
+    <div><b id="hFwd">58</b><span>FORWARD ft/s</span></div>
+    <div><b id="hSide">0</b><span>SIDEWAYS ft/s</span></div>
+    <div class="fuel"><b id="hFuel">163</b><span>TO BINGO s</span></div>
+    <div class="rod"><b id="hRod">11</b><span>SET DESCENT ft/s</span></div>
+    <div class="get"><b id="hGet">102:43:22</b><span>MISSION TIME</span></div>
+  </div>
+  <div id="alert" class="alert" role="status" aria-live="polite"></div>
+  <div class="callbar"><span class="who">The real Eagle</span><span id="call"></span></div>
+
+  <div id="joy" class="joy" aria-hidden="true"><i id="joyKnob"></i></div>
+  <div class="rod-btns">
+    <button id="slowerBtn" class="tbtn" aria-label="Slower descent">▲<small>slower</small></button>
+    <button id="fasterBtn" class="tbtn" aria-label="Faster descent">▼<small>faster</small></button>
+  </div>
+  <div class="hint">W A S D tilt the lander · ↑ ↓ descent rate · drag to look all around · wheel or + − zoom · Q E turn · V or double-click reset · C window view · 🎮 left stick tilt, right stick camera</div>
+
+  <div id="intro" class="intro">
+    <div class="intro-card">
+      <div class="pill">20 Jul 1969 · Apollo 11 · 102:43:22 mission time</div>
+      <h1 id="introTitle">Loading NASA terrain…</h1>
+      <p id="introText">The computer is steering Eagle toward West crater, a hole the size of a football field ringed with boulders as big as cars. Neil Armstrong takes manual control a little under 500 feet up, moving forward at 58 feet per second. You have about two and a half minutes of fuel. Fly past the boulders and set her down gently.</p>
+      <p class="fine">Tilt to move (stick or W A S D). The computer holds the descent rate you set: each ▲ or ▼ changes it by 1 ft/s, like the real switch Armstrong used. The ground is NASA's real elevation map. The red ring is where Eagle really landed. Drag to look all around (on a phone: left thumb tilts, right thumb looks, pinch to zoom).</p>
+      <div class="intro-actions">
+        <button class="btn primary" id="startBtn" disabled>Take control</button>
+        <a class="btn" href="walk.html?site=apollo11">Walk the site instead</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="results" class="intro" hidden>
+    <div class="intro-card">
+      <div id="resultsBody"></div>
+      <div class="intro-actions">
+        <button class="btn primary" id="againBtn">Fly it again</button>
+        <a class="btn" href="walk.html?site=apollo11">Walk Tranquility Base</a>
+      </div>
+    </div>
+  </div>
+</div>
+<noscript>This 3D landing needs JavaScript and WebGL.</noscript>
+<script type="module" src="js/land.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Walk a Landing Site · Zero Universe</title>
+<meta name="description" content="Walk real landing sites as an astronaut: Apollo 11, Chang'e 4, Perseverance and Falcon 9. Every object links its primary source.">
+<meta name="theme-color" content="#0D0E11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="explore.css">
+<link rel="stylesheet" href="walk.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body class="walk">
+<div id="app">
+  <canvas id="scene" tabindex="0" aria-label="3D landing site you can walk around"></canvas>
+  <div id="labels" aria-hidden="true"></div>
+
+  <header class="top">
+    <a class="mark" href="index.html" aria-label="Back to the Solar System map">
+      <span class="back">←</span><span class="mark-dot"></span><span class="mark-word" id="siteName">ZERO UNIVERSE</span>
+    </a>
+    <div class="top-right">
+      <span class="chip"><span id="foundCount">0</span><span class="of">/<span id="totalCount">0</span></span><span class="fw"> found</span></span>
+      <button class="chip pts-chip" id="ptsBtn" hidden aria-label="Mission log and points"></button>
+      <button class="chip view-chip" id="fpBtn" aria-label="Switch between helmet view and outside view">Helmet view</button>
+      <button class="chip" id="sitesBtn">Sites</button>
+    </div>
+  </header>
+
+  <div id="guide" class="guide" aria-live="off"></div>
+  <div id="prompt" class="prompt"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <aside id="panel" class="panel" aria-live="polite" hidden>
+    <button class="close" id="panelClose" aria-label="Close">✕</button>
+    <div id="panelBody"></div>
+  </aside>
+
+  <div class="hint">Click the ground to walk · WASD or arrows · Shift run · Space jump · E inspect · drag to look all around · V helmet view · wheel or + − zoom · double-click reset · 🎮 controller works too</div>
+  <div id="joy" class="joy" aria-hidden="true"><i id="joyKnob"></i></div>
+  <div class="touch-btns">
+    <button id="inspectBtn" class="tbtn inspect">Inspect</button>
+    <button id="jumpBtn" class="tbtn" aria-label="Jump">Jump</button>
+  </div>
+
+  <div id="intro" class="intro">
+    <div class="intro-card">
+      <div class="pill" id="introWhere">The Moon</div>
+      <h1 id="introTitle">Landing site</h1>
+      <p class="intro-meta" id="introMeta"></p>
+      <p id="introText"></p>
+      <div class="intro-actions">
+        <button class="btn primary" id="startBtn">Start walking</button>
+        <a class="btn" id="landBtn" href="land.html" hidden>Land the Eagle</a>
+        <a class="btn" href="index.html">Back to the map</a>
+      </div>
+      <p class="fine" id="introFine">Walk up to a red marker and inspect it. Objects are placed closer together than in real life so you can reach them on foot. Works with a PS5 or other game controller.</p>
+    </div>
+  </div>
+</div>
+<noscript>This 3D site needs JavaScript and WebGL.</noscript>
+<script type="module" src="js/walk.js"></script>
+</body>
+</html>

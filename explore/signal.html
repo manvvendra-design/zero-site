@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>One Light-Day · Zero Universe</title>
+<meta name="description" content="Mission for November 2026: send a message to Voyager 1 at the speed of light and watch it take a whole day to arrive. Distances from NASA JPL.">
+<meta name="theme-color" content="#0D0E11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="explore.css">
+<link rel="stylesheet" href="walk.css">
+<link rel="stylesheet" href="signal.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body class="walk signal">
+<div id="app">
+  <canvas id="scene" tabindex="0" aria-label="3D view of the Solar System with a light signal travelling to Voyager 1"></canvas>
+  <div id="labels" aria-hidden="true"></div>
+
+  <header class="top">
+    <a class="mark" href="index.html" aria-label="Back to the Solar System map">
+      <span class="back">←</span><span class="mark-dot"></span><span class="mark-word">One light-day</span>
+    </a>
+    <div class="top-right">
+      <button class="chip pts-chip" id="ptsBtn" aria-label="Mission log and points"></button>
+    </div>
+  </header>
+
+  <div class="clock" id="clock" aria-live="off">
+    <div class="row"><span class="k">Light travel time</span><b id="cT">0 s</b></div>
+    <div class="row"><span class="k">Distance from Earth</span><b id="cD">0 km</b></div>
+    <div class="bar"><i id="cBar"></i></div>
+    <div class="row small"><span class="k">To Voyager 1</span><span id="cLeft">24 h</span></div>
+  </div>
+
+  <div class="warp" id="warp" hidden>
+    <span class="k">Time speed</span>
+    <button data-w="1" class="on">Real</button>
+    <button data-w="60">1 min/s</button>
+    <button data-w="1800">30 min/s</button>
+    <button data-w="0" id="nextBtn">Next stop ▸</button>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <aside id="panel" class="panel" aria-live="polite" hidden>
+    <button class="close" id="panelClose" aria-label="Close">✕</button>
+    <div id="panelBody"></div>
+  </aside>
+  <div class="hint">Drag to look all around · scroll or pinch to zoom · F follows the signal · Space sends</div>
+
+  <div id="intro" class="intro">
+    <div class="intro-card">
+      <div class="pill">Mission 2 · November 2026</div>
+      <h1>One light-day</h1>
+      <p class="intro-meta">18 Nov 2026 · Voyager 1 · NASA</p>
+      <p>On 18 November 2026 Voyager 1 became the first spacecraft ever to be one light-day from Earth: so far away that a radio message, moving at the speed of light, takes a whole day to reach it. It launched in 1977.</p>
+      <p>Send it a message. Your signal leaves Earth at the speed of light. Speed up time to follow it past the Moon, the planets and the edge of the Sun’s bubble, and see how long the journey really is.</p>
+      <div class="intro-actions">
+        <button class="btn primary" id="sendBtn" disabled>Loading…</button>
+        <a class="btn" href="index.html">Back to the map</a>
+      </div>
+      <p class="fine">Planet positions and Voyager 1’s path come from NASA JPL Horizons. Distances on screen are squeezed (log scale) so Earth and Voyager fit together; the clock and every number use the real distances.</p>
+    </div>
+  </div>
+</div>
+<noscript>This 3D mission needs JavaScript and WebGL.</noscript>
+<script type="module" src="js/signal.js"></script>
+</body>
+</html>

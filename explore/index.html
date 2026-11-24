@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zero Universe Explorer</title>
+<meta name="description" content="Fly through the real Solar System and discover what every space agency has achieved, from Sputnik to today. Positions from NASA JPL.">
+<meta name="theme-color" content="#0D0E11">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="explore.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<div id="app">
+  <canvas id="scene" aria-label="3D map of the Solar System"></canvas>
+  <div id="labels"></div>
+
+  <header class="top">
+    <a class="mark" href="#" id="homeBtn" aria-label="Zero Universe Explorer, back to overview">
+      <span class="mark-dot"></span><span class="mark-word">ZERO UNIVERSE</span><span class="pill">Explorer</span>
+    </a>
+    <div class="top-right">
+      <button class="chip" id="missionsBtn" aria-label="Missions: walk on the Moon, land the Eagle, one light-day">🚀<span class="fw"> Missions</span></button>
+      <button class="chip" id="progressBtn" aria-label="Quests and progress"><span id="foundCount">0</span><span class="of">/<span id="totalCount">0</span></span><span class="fw"> found</span></button>
+      <button class="icon-btn" id="listBtn" aria-label="All achievements">☰</button>
+      <button class="icon-btn" id="aboutBtn" aria-label="About this map">i</button>
+    </div>
+  </header>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <aside id="panel" class="panel" aria-live="polite" hidden>
+    <button class="close" id="panelClose" aria-label="Close">✕</button>
+    <div id="panelBody"></div>
+  </aside>
+
+  <footer class="timeline">
+    <button class="play" id="playBtn" aria-label="Play history">▶</button>
+    <div class="tl-main">
+      <div class="tl-row">
+        <span class="tl-date" id="dateLabel">24 Nov 2026</span>
+        <span class="tl-note" id="dateNote">Today</span>
+      </div>
+      <div class="tl-track">
+        <input type="range" id="timeSlider" min="0" max="1000" step="1" value="1000" aria-label="Date">
+        <div class="tl-ticks" id="ticks"></div>
+      </div>
+    </div>
+    <button class="chip small" id="todayBtn">Today</button>
+  </footer>
+
+  <div id="intro" class="intro">
+    <div class="intro-card">
+      <div class="pill">Zero Universe · Explorer</div>
+      <h1>Every place <span class="accent">humans</span> have reached</h1>
+      <p>Fly through the Solar System as it is right now, with real positions from NASA JPL. Find <b id="introCount">45</b> achievements by every space agency, then replay history from 1957.</p>
+      <div class="intro-actions">
+        <button class="btn primary" id="startToday">Explore today</button>
+        <button class="btn" id="startReplay">Replay from 1957</button>
+        <a class="btn" href="walk.html?site=apollo11">Walk on the Moon</a>
+        <a class="btn" href="land.html">Land the Eagle</a>
+        <a class="btn" href="signal.html">November: One light-day</a>
+      </div>
+      <p class="fine">Drag to turn · pinch or scroll to zoom · tap a red marker</p>
+    </div>
+  </div>
+</div>
+<noscript>This 3D map needs JavaScript and WebGL.</noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
