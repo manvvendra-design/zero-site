@@ -446,6 +446,7 @@ function bindRows() {
   }));
 }
 
+const WALK = { apollo11: 'apollo11', change4: 'change4', ingenuity: 'jezero' };
 function openAchievement(id, fly = true) {
   const a = byId[id];
   if (fly) focusPlace(a.place);
@@ -464,7 +465,8 @@ function openAchievement(id, fly = true) {
     <a class="src" href="${esc(a.source)}" target="_blank" rel="noopener">Source: ${esc(a.sourceLabel)} ↗</a>
     <div class="row-btns">
       <button class="btn" id="seeWhere">Where: ${esc(placeName(a.place))}</button>
-      ${nextInQuest ? `<button class="btn primary" id="nextQ">Next in “${esc(quest.title)}”</button>` : ''}
+      ${WALK[id] ? `<a class="btn primary" href="walk.html?site=${WALK[id]}">Walk here as an astronaut</a>` : ''}
+      ${nextInQuest ? `<button class="btn ${WALK[id] ? '' : 'primary'}" id="nextQ">Next in “${esc(quest.title)}”</button>` : ''}
     </div>
     ${quest ? `<h3>Quest · ${esc(quest.title)}</h3><div class="bar"><i style="width:${(100 * qDone) / quest.ids.length}%"></i></div><p class="fine" style="margin-top:6px">${qDone} of ${quest.ids.length} found${qDone === quest.ids.length ? ' · complete' : ''}</p>` : ''}`);
   document.getElementById('seeWhere').addEventListener('click', () => focusPlace(a.place));

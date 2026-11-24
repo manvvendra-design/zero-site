@@ -80,6 +80,7 @@ a { color: inherit; }
 .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
 .bar i { display: block; height: 100%; background: var(--signal); }
 .btn { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 11px 18px; font-weight: 600; font-size: 14px; }
+.btn { text-decoration: none; display: inline-block; }
 .btn.primary { background: var(--red); border-color: var(--red); }
 .btn:hover { border-color: var(--rose); }
 .row-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }

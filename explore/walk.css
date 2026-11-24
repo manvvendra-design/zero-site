@@ -1,0 +1,43 @@
+/* Walk mode, on top of explore.css */
+.mark .back { font: 600 18px/1 var(--body); color: var(--muted); margin-right: 2px; }
+a.chip, .chip { text-decoration: none; }
+.wlbl { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; font: 600 11px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ivory); background: rgba(13,14,17,.7); border: 1px solid rgba(255,45,70,.55); border-radius: 999px; padding: 5px 9px; opacity: 0; transition: opacity .2s; will-change: transform; }
+.wlbl.done { border-color: var(--line); color: var(--muted); }
+
+.guide { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: var(--glass); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px 6px 8px; font-size: 13px; font-weight: 600; white-space: nowrap; opacity: 0; transition: opacity .3s; pointer-events: none; backdrop-filter: blur(8px); }
+.guide.show { opacity: 1; }
+.guide i { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--red); font-style: normal; font-size: 10px; }
+
+.prompt { position: absolute; left: 50%; bottom: 96px; transform: translate(-50%, 12px); opacity: 0; transition: opacity .2s, transform .2s; display: flex; align-items: center; gap: 10px; background: var(--ivory); color: var(--ink); border-radius: 12px; padding: 10px 14px; font-size: 14px; pointer-events: none; white-space: nowrap; }
+.prompt.show { opacity: 1; transform: translate(-50%, 0); }
+.prompt b { font: 900 18px/1 var(--title); text-transform: uppercase; letter-spacing: .02em; }
+.prompt .k { display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 6px; background: var(--ink); color: var(--ivory); font: 700 12px/1 var(--body); }
+.prompt .k-pad, .prompt .k-touch { display: none; }
+body.pad .prompt .k-pad { display: inline-grid; }
+body.touch .prompt .k-key { display: none; }
+body.touch .prompt .k-touch { display: inline-grid; background: var(--red); }
+
+.hint { position: absolute; left: 16px; bottom: max(16px, env(safe-area-inset-bottom)); font-size: 12px; color: var(--muted); background: var(--glass); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; backdrop-filter: blur(8px); }
+body.touch .hint { display: none; }
+
+.joy { position: absolute; left: 0; top: 0; width: 120px; height: 120px; border-radius: 50%; border: 2px solid rgba(244,241,234,.35); background: rgba(13,14,17,.25); display: none; place-items: center; pointer-events: none; }
+.joy.on { display: grid; }
+.joy i { width: 52px; height: 52px; border-radius: 50%; background: rgba(244,241,234,.8); }
+.touch-btns { position: absolute; right: 16px; bottom: max(18px, env(safe-area-inset-bottom)); display: none; gap: 10px; align-items: flex-end; }
+body.touch .touch-btns { display: flex; }
+.tbtn { width: 72px; height: 72px; border-radius: 50%; border: 1px solid var(--line); background: var(--glass); font-weight: 600; font-size: 13px; backdrop-filter: blur(8px); touch-action: manipulation; }
+.tbtn.inspect { background: var(--red); border-color: var(--red); display: none; }
+body.near .tbtn.inspect { display: block; }
+body.touch .prompt { bottom: 112px; }
+
+.site-row { display: grid; grid-template-columns: 46px 1fr auto; gap: 10px; align-items: baseline; padding: 11px 2px; border-top: 1px solid var(--line); text-decoration: none; }
+.list li:first-child .site-row { border-top: 0; }
+.site-row.here .t { color: var(--signal); }
+.site-row .n { font: 800 14px/1 var(--title); color: var(--muted); }
+.intro-meta { font: 800 16px/1 var(--title) !important; letter-spacing: .08em; text-transform: uppercase; color: var(--rose) !important; margin-bottom: 12px !important; }
+.intro .btn { text-decoration: none; display: inline-block; }
+.walk .panel { bottom: 16px; }
+@media (max-width: 640px) {
+  .guide { top: 58px; font-size: 12px; }
+  .walk .panel { bottom: 0; }
+}
