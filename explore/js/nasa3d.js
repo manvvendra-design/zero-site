@@ -28,7 +28,10 @@ function tex(url, srgb) {
 }
 function stage(name) {
   if (!cache[name]) {
-    cache[name] = loader.loadAsync(`models/lm_${name}.glb`).then((gl) => {
+    // the preview host can't serve .glb files, so it gets a base64 text copy instead
+    const viaText = () => fetch(`models/lm_${name}.glb.b64.txt`).then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then((t) => { const bin = atob(t.trim()); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return loader.parseAsync(u.buffer, 'models/'); });
+    cache[name] = loader.loadAsync(`models/lm_${name}.glb`).catch(viaText).then((gl) => {
       const ao = tex(`models/lm_${name}_ao.jpg`), nrm = tex(`models/lm_${name}_nrm.jpg`);
       gl.scene.traverse((o) => {
         if (!o.isMesh) return;
