@@ -1,0 +1,26 @@
+/* Mission 2: One light-day */
+.signal .lbl.big { color: var(--ivory); font-size: 12px; }
+.signal .lbl.gold { color: #E9B95A; }
+.signal .lbl.pulse { color: #9fe0ff; font-size: 12px; margin-top: 14px; }
+.clock { position: absolute; left: 16px; top: 70px; width: min(310px, calc(100% - 32px)); background: var(--glass); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(12px); padding: 12px 14px; }
+.clock .row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 2px 0; }
+.clock .k { color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.clock b { font: 800 20px/1.1 var(--title); color: #9fe0ff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.clock .row .k { flex: none; }
+.clock .row.small span:last-child { font-size: 13px; font-variant-numeric: tabular-nums; }
+.clock .bar { height: 4px; background: rgba(255, 255, 255, .1); border-radius: 2px; margin: 8px 0 6px; overflow: hidden; }
+.clock .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #7fd3ff, var(--signal)); }
+.warp { position: absolute; left: 50%; bottom: 52px; transform: translateX(-50%); display: flex; gap: 6px; align-items: center; background: var(--glass); border: 1px solid var(--line); border-radius: 999px; padding: 6px 8px 6px 14px; backdrop-filter: blur(12px); }
+.warp .k { color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; margin-right: 4px; }
+.warp button { border: 1px solid var(--line); background: transparent; color: inherit; border-radius: 999px; padding: 7px 11px; font: 600 12px/1 var(--body); cursor: pointer; white-space: nowrap; }
+.warp button.on { background: var(--ivory); color: var(--ink); }
+#nextBtn { border-color: rgba(255, 45, 70, .6); color: var(--rose); }
+.signal .toast { bottom: 110px; }
+@media (max-width: 640px) {
+  .clock { top: 64px; padding: 10px 12px; }
+  .clock b { font-size: 18px; }
+  .warp { bottom: 16px; padding: 5px 6px; gap: 4px; }
+  .warp .k { display: none; }
+  .warp button { padding: 8px 9px; }
+  .signal .hint { display: none; }
+}
